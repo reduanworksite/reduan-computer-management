@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Notifications — নোটিফিকেশন</h2>
+    <p>নতুন ভর্তি, পেমেন্ট ও বকেয়া সংক্রান্ত আপডেট।</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="form-group">
+      <label for="filter-read">ফিল্টার</label>
+      <select id="filter-read">
+        <option value="all">সব</option>
+        <option value="unread">শুধু অপঠিত (Unread)</option>
+      </select>
+    </div>
+    <button class="btn" id="btn-load">তালিকা দেখুন</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ধরন</th><th>শিরোনাম</th><th>বার্তা</th><th>সময়</th><th>অবস্থা</th><th>Action</th></tr></thead>
+      <tbody id="notif-body"><tr><td colspan="6" class="empty-state">Backend সংযুক্ত হলে নোটিফিকেশন দেখাবে।</td></tr></tbody>
+    </table>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('notifications', 'Notifications');
+  var tbody = document.getElementById('notif-body');
+  var cache = [];
+
+  function loadNotifications() {
+    var unreadOnly = document.getElementById('filter-read').value === 'unread';
+    RC_ADMIN.setLoading(tbody, true);
+    RC_API.call('getNotifications', { unreadOnly: unreadOnly, limit: 50 }).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'নোটিফিকেশন আনা যায়নি।', 'error'); RC_ADMIN.emptyRow(tbody, 6); return; }
+      cache = res.data || [];
+      if (!cache.length) { RC_ADMIN.emptyRow(tbody, 6, 'কোনো নোটিফিকেশন পাওয়া যায়নি।'); return; }
+      tbody.innerHTML = cache.map(function (n) {
+        return '<tr class="' + (n.isRead ? '' : 'unread-row') + '">' +
+          '<td><span class="badge badge-info">' + RC_API.esc(n.type) + '</span></td>' +
+          '<td>' + RC_API.esc(n.title) + '</td>' +
+          '<td class="wrap">' + RC_API.esc(n.message) + '</td>' +
+          '<td>' + RC_API.esc(RC_API.fmtDateTime(n.createdAt)) + '</td>' +
+          '<td>' + (n.isRead ? 'পড়া হয়েছে' : '<span class="badge badge-warning">অপঠিত</span>') + '</td>' +
+          '<td>' + (n.isRead ? '—' : '<button class="btn btn-sm" data-read="' + RC_API.esc(n.notificationId) + '">পড়া হয়েছে</button>') + '</td>' +
+        '</tr>';
+      }).join('');
+    });
+  }
+
+  tbody.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-read]');
+    if (!btn) return;
+    RC_API.call('markNotificationRead', { notificationId: btn.getAttribute('data-read') }).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'চিহ্নিত করা যায়নি।', 'error'); return; }
+      RC_ADMIN.toast('নোটিফিকেশনটি পড়া হয়েছে বলে চিহ্নিত হয়েছে।', 'success');
+      loadNotifications();
+    });
+  });
+
+  document.getElementById('btn-load').addEventListener('click', loadNotifications);
+  document.getElementById('filter-read').addEventListener('change', loadNotifications);
+
+  RC_ADMIN.guardPage().then(function (ok) { if (ok) loadNotifications(); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Settings — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Admin Settings — অ্যাডমিন সেটিংস</h2>
+    <p>লগইন করা অ্যাডমিনের তথ্য ও অ্যাকাউন্ট ব্যবস্থাপনা।</p>
+  </div>
+
+  <div class="card mb-3" style="max-width: 720px;">
+    <h3>লগইন করা অ্যাডমিন</h3>
+    <table class="kv-table"><tbody id="admin-info">
+      <tr><td>Username</td><td id="ai-username">—</td></tr>
+      <tr><td>পূর্ণ নাম</td><td id="ai-fullname">—</td></tr>
+      <tr><td>ভূমিকা (Role)</td><td id="ai-role">—</td></tr>
+      <tr><td>সেশনের মেয়াদ</td><td id="ai-expiry">—</td></tr>
+    </tbody></table>
+    <button class="btn btn-outline mt-2" id="btn-logout">লগআউট</button>
+  </div>
+
+  <div class="card mb-3" style="max-width: 720px;">
+    <h3>পাসওয়ার্ড পরিবর্তন</h3>
+    <p class="small muted">নতুন পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে এবং পুরোনো পাসওয়ার্ড থেকে আলাদা হতে হবে। সফল হলে সেশন শেষ হয়ে যাবে — নতুন পাসওয়ার্ড দিয়ে আবার লগইন করতে হবে। পাসওয়ার্ড কোথাও সংরক্ষণ বা দেখানো হয় না।</p>
+    <form id="pw-form">
+      <div class="form-group"><label>বর্তমান পাসওয়ার্ড <span class="req">*</span></label><input type="password" id="pw-old" autocomplete="current-password" required></div>
+      <div class="form-group"><label>নতুন পাসওয়ার্ড <span class="req">*</span></label><input type="password" id="pw-new" autocomplete="new-password" minlength="8" required></div>
+      <div class="form-group"><label>নতুন পাসওয়ার্ড আবার দিন <span class="req">*</span></label><input type="password" id="pw-confirm" autocomplete="new-password" minlength="8" required></div>
+      <button type="submit" class="btn" id="pw-submit">পাসওয়ার্ড পরিবর্তন করুন</button>
+    </form>
+    <div id="pw-result" class="alert hidden mt-2"></div>
+  </div>
+
+  <div class="card" style="max-width: 720px;">
+    <h3>অ্যাডমিন ব্যবহারকারী (Admin Users)</h3>
+    <div class="alert alert-info">
+      <strong>সৎ নোট:</strong> backend-এ একাধিক অ্যাডমিন/স্টাফের সমর্থন আছে
+      (<code>AdminUsers</code> শিট, Role: Admin / Staff), কিন্তু অ্যাডমিনদের
+      তালিকা দেখা বা নতুন অ্যাডমিন তৈরি করার কোনো action
+      (<code>listAdmins</code> / <code>createAdmin</code>) এখনো নেই। তাই এই
+      পাতায় ব্যবহারকারীর তালিকা বা নতুন অ্যাডমিন তৈরির ফরম দেখানো সম্ভব নয়।
+      নতুন অ্যাডমিন যোগ করতে হলে মালিক Apps Script-এ
+      <code>createInitialAdmin</code> প্যাটার্নে তৈরি করবেন, যতক্ষণ না backend-এ
+      এই action যোগ হয়।
+    </div>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('admin-settings', 'Admin Settings');
+
+  function fillAdminInfo() {
+    var user = RC_API.getSessionUser() || {};
+    document.getElementById('ai-username').textContent = user.username || '—';
+    document.getElementById('ai-fullname').textContent = user.fullName || '—';
+    document.getElementById('ai-role').textContent = user.role || '—';
+    var exp = RC_API.getTokenExpiry();
+    document.getElementById('ai-expiry').textContent = exp ? RC_API.fmtDateTime(exp) : '—';
+  }
+
+  document.getElementById('btn-logout').addEventListener('click', function () {
+    if (RC_ADMIN.confirmDialog('লগআউট করতে চান?')) RC_API.logout();
+  });
+
+  /* পাসওয়ার্ড পরিবর্তন — admin action changePassword।
+   * পাসওয়ার্ড কখনো সংরক্ষণ/লগ/দেখানো হয় না; ফরম জমা দেওয়ার পর
+   * তিনটি ফিল্ডই খালি করে দেওয়া হয়। সফল হলে backend সেশন বাতিল করে
+   * দেয়, তাই সেশন মুছে login.html-এ পাঠানো হয় — সেখানে একবারের
+   * নোটিশে আবার লগইন করতে বলা হয়। */
+  var pwForm = document.getElementById('pw-form');
+  var pwResult = document.getElementById('pw-result');
+  function clearPwFields() {
+    document.getElementById('pw-old').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-confirm').value = '';
+  }
+  function showPwResult(msg, isError) {
+    pwResult.textContent = msg;
+    pwResult.className = 'alert mt-2 ' + (isError ? 'alert-error' : 'alert-success');
+  }
+  pwForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var oldPw = document.getElementById('pw-old').value;
+    var newPw = document.getElementById('pw-new').value;
+    var confirmPw = document.getElementById('pw-confirm').value;
+    if (!oldPw || !newPw || !confirmPw) { showPwResult('তিনটি ফিল্ডই পূরণ করুন।', true); return; }
+    if (newPw.length < 8) { showPwResult('নতুন পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।', true); return; }
+    if (newPw !== confirmPw) { showPwResult('নতুন পাসওয়ার্ড দুইবার একইভাবে লিখুন।', true); return; }
+    if (newPw === oldPw) { showPwResult('নতুন পাসওয়ার্ড পুরোনো পাসওয়ার্ড থেকে আলাদা হতে হবে।', true); return; }
+    var btn = document.getElementById('pw-submit');
+    btn.disabled = true;
+    btn.textContent = 'পরিবর্তন হচ্ছে…';
+    RC_API.call('changePassword', { oldPassword: oldPw, newPassword: newPw }).then(function (res) {
+      clearPwFields();
+      btn.disabled = false;
+      btn.textContent = 'পাসওয়ার্ড পরিবর্তন করুন';
+      if (!res.ok) { showPwResult(res.error || 'পাসওয়ার্ড পরিবর্তন করা যায়নি।', true); return; }
+      /* সফল: backend টোকেন বাতিল করেছে — সেশন মুছে লগইন পাতায় যান। */
+      RC_API.clearSession();
+      try { sessionStorage.setItem('rc-login-notice', 'পাসওয়ার্ড পরিবর্তন হয়েছে। নতুন পাসওয়ার্ড দিয়ে আবার লগইন করুন।'); } catch (err) { /* ignore */ }
+      window.location.href = 'login.html?relogin=1';
+    });
+  });
+
+  RC_ADMIN.guardPage().then(function (ok) { if (ok) fillAdminInfo(); });
+})();
+</script>
+</body>
+</html>

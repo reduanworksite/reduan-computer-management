@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports &amp; Analytics — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Reports &amp; Analytics — রিপোর্ট</h2>
+    <p>৮ ধরনের রিপোর্ট — সব তথ্য সরাসরি ডেটাবেস থেকে আসে।</p>
+  </div>
+
+  <div class="card mb-3">
+    <div class="toolbar">
+      <div class="form-group grow">
+        <label for="report-type">রিপোর্টের ধরন</label>
+        <select id="report-type">
+          <option value="dailyAdmissions">Daily Admission (দৈনিক ভর্তি)</option>
+          <option value="monthlyAdmissions">Monthly Admission (মাসিক ভর্তি)</option>
+          <option value="courseWise">Course-wise Student (কোর্স অনুযায়ী শিক্ষার্থী)</option>
+          <option value="payment">Student Payment (শিক্ষার্থী পেমেন্ট)</option>
+          <option value="dueReport">Due Report (বকেয়া রিপোর্ট)</option>
+          <option value="income">Monthly Income (মাসিক আয়)</option>
+          <option value="expense">Expense (খরচ)</option>
+          <option value="summary">Overall Financial Summary (সার্বিক আর্থিক সারসংক্ষেপ)</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="from">From</label><input type="date" id="from"></div>
+      <div class="form-group"><label for="to">To</label><input type="date" id="to"></div>
+      <button class="btn" id="btn-run">রিপোর্ট দেখুন</button>
+      <button class="btn btn-outline" id="btn-csv">CSV ডাউনলোড</button>
+      <button class="btn btn-outline no-print" id="btn-print">🖨️ প্রিন্ট</button>
+    </div>
+    <p class="small muted" id="report-note"></p>
+  </div>
+
+  <div id="report-result"></div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('reports', 'Reports & Analytics');
+  var resultBox = document.getElementById('report-result');
+  var noteBox = document.getElementById('report-note');
+  var lastRows = null; /* {headers:[], rows:[[]], filename:''} — CSV-এর জন্য */
+
+  var NOTES = {
+    dailyAdmissions: 'getReports type: dailyAdmissions — প্রতিদিনের ভর্তি সংখ্যা (period, count)।',
+    monthlyAdmissions: 'getReports type: monthlyAdmissions — প্রতি মাসের ভর্তি সংখ্যা (period, count)।',
+    courseWise: 'getReports type: courseWise — প্রতি কোর্সে শিক্ষার্থী, মোট ফি, আদায় ও বকেয়া।',
+    payment: 'getPaymentHistory (from/to) — নির্বাচিত সময়ের সব পেমেন্ট।',
+    dueReport: 'getReports type: dueReport — বকেয়া আছে এমন শিক্ষার্থীদের তালিকা।',
+    income: 'getReports type: incomeExpense — নির্বাচিত সময়ের মোট আয়, মোট খরচ ও Net Cash।',
+    expense: 'getReports type: incomeExpense — নির্বাচিত সময়ের মোট খরচ (আয়ের পাশাপাশি দেখানো হয়)।',
+    summary: 'getReports type: summary (default) — সার্বিক আর্থিক সারসংক্ষেপ।'
+  };
+
+  function renderTable(headers, rows) {
+    if (!rows.length) {
+      resultBox.innerHTML = '<div class="card"><p class="empty-state">এই সময়ে কোনো তথ্য পাওয়া যায়নি।</p></div>';
+      return;
+    }
+    resultBox.innerHTML = '<div class="table-wrap"><table><thead><tr>' +
+      headers.map(function (h) { return '<th>' + RC_API.esc(h) + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr>' + r.map(function (c) { return '<td>' + RC_API.esc(c) + '</td>'; }).join('') + '</tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  }
+
+  function renderSummary(d) {
+    var pairs = [
+      ['মোট শিক্ষার্থী', String(Number(d.totalStudents) || 0)],
+      ['মোট ফি', RC_API.fmtMoney(d.totalFee)],
+      ['মোট আদায়', RC_API.fmtMoney(d.totalPaid)],
+      ['মোট বকেয়া', RC_API.fmtMoney(d.totalDue)],
+      ['মোট খরচ', RC_API.fmtMoney(d.totalExpenses)],
+      ['নগদ অবস্থা (Net Cash)', RC_API.fmtMoney(d.netCash)],
+      ['বকেয়া আছে এমন শিক্ষার্থী', String(Number(d.studentsWithDue) || 0)],
+      ['অপেক্ষমাণ ভর্তি আবেদন', String(Number(d.pendingAdmissions) || 0)]
+    ];
+    lastRows = { headers: ['বিবরণ', 'মান'], rows: pairs, filename: 'financial-summary.csv' };
+    renderTable(['বিবরণ', 'মান'], pairs);
+  }
+
+  function runReport() {
+    var type = document.getElementById('report-type').value;
+    var from = document.getElementById('from').value;
+    var to = document.getElementById('to').value;
+    noteBox.textContent = NOTES[type] || '';
+    lastRows = null;
+    resultBox.innerHTML = '<div class="card"><p class="text-center"><span class="spinner"></span> লোড হচ্ছে…</p></div>';
+
+    if (type === 'payment') {
+      var p = {};
+      if (from) p.from = from;
+      if (to) p.to = to;
+      RC_API.call('getPaymentHistory', p).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'রিপোর্ট আনা যায়নি।', 'error'); resultBox.innerHTML = ''; return; }
+        var rows = (res.data || []).map(function (x) {
+          return [x.paymentId, x.studentName + ' (' + x.studentId + ')', x.courseName, RC_API.fmtMoney(x.amount), RC_API.fmtDate(x.paymentDate), x.paymentMethod, x.transactionId || '—', x.receivedBy || '—'];
+        });
+        lastRows = { headers: ['Payment ID', 'Student', 'Course', 'Amount', 'Date', 'Method', 'Transaction ID', 'Received By'], rows: rows, filename: 'payment-report.csv' };
+        renderTable(lastRows.headers, rows);
+      });
+      return;
+    }
+
+    if (type === 'income' || type === 'expense') {
+      var p2 = { type: 'incomeExpense' };
+      if (from) p2.from = from;
+      if (to) p2.to = to;
+      RC_API.call('getReports', p2).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'রিপোর্ট আনা যায়নি।', 'error'); resultBox.innerHTML = ''; return; }
+        var d = res.data || {};
+        var rows = [
+          ['সময়কাল', (d.from || from || '—') + ' থেকে ' + (d.to || to || '—')],
+          ['মোট আয় (Income)', RC_API.fmtMoney(d.income)],
+          ['মোট খরচ (Expenses)', RC_API.fmtMoney(d.expenses)],
+          ['Net Cash (আয় − খরচ)', RC_API.fmtMoney(d.netCash)]
+        ];
+        lastRows = { headers: ['বিবরণ', 'মান'], rows: rows, filename: (type === 'income' ? 'income-report.csv' : 'expense-report.csv') };
+        renderTable(lastRows.headers, rows);
+      });
+      return;
+    }
+
+    if (type === 'summary') {
+      RC_API.call('getReports', { type: 'summary' }).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'রিপোর্ট আনা যায়নি।', 'error'); resultBox.innerHTML = ''; return; }
+        renderSummary(res.data || {});
+      });
+      return;
+    }
+
+    var p3 = { type: type };
+    if (from) p3.from = from;
+    if (to) p3.to = to;
+    RC_API.call('getReports', p3).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'রিপোর্ট আনা যায়নি।', 'error'); resultBox.innerHTML = ''; return; }
+      var data = res.data || [];
+      if (type === 'dailyAdmissions' || type === 'monthlyAdmissions') {
+        var rows = data.map(function (r) { return [r.period, String(Number(r.count) || 0)]; });
+        lastRows = { headers: ['Period', 'ভর্তি সংখ্যা'], rows: rows, filename: type + '.csv' };
+        renderTable(lastRows.headers, rows);
+      } else if (type === 'courseWise') {
+        var rows2 = data.map(function (r) {
+          return [r.course, String(Number(r.students) || 0), RC_API.fmtMoney(r.totalFee), RC_API.fmtMoney(r.paid), RC_API.fmtMoney(r.due)];
+        });
+        lastRows = { headers: ['Course', 'Students', 'Total Fee', 'Paid', 'Due'], rows: rows2, filename: 'course-wise-report.csv' };
+        renderTable(lastRows.headers, rows2);
+      } else if (type === 'dueReport') {
+        var rows3 = data.map(function (s) {
+          return [s.studentId, s.fullName, s.mobile, s.courseName, s.batchName, RC_API.fmtMoney(s.totalFee), RC_API.fmtMoney(s.paidAmount), RC_API.fmtMoney(s.dueAmount), s.paymentStatus || ''];
+        });
+        lastRows = { headers: ['Student ID', 'Name', 'Mobile', 'Course', 'Batch', 'Total Fee', 'Paid', 'Due', 'Payment Status'], rows: rows3, filename: 'due-report.csv' };
+        renderTable(lastRows.headers, rows3);
+      }
+    });
+  }
+
+  document.getElementById('btn-run').addEventListener('click', runReport);
+  document.getElementById('report-type').addEventListener('change', function () {
+    noteBox.textContent = NOTES[document.getElementById('report-type').value] || '';
+  });
+  document.getElementById('btn-csv').addEventListener('click', function () {
+    if (!lastRows) { RC_ADMIN.toast('প্রথমে একটি রিপোর্ট চালান।', 'error'); return; }
+    RC_API.downloadCSV(lastRows.filename, lastRows.headers, lastRows.rows);
+  });
+  document.getElementById('btn-print').addEventListener('click', function () { window.print(); });
+
+  RC_ADMIN.guardPage().then(function (ok) {
+    if (!ok) return;
+    noteBox.textContent = NOTES.dailyAdmissions;
+  });
+})();
+</script>
+</body>
+</html>

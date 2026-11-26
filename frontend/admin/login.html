@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div class="login-wrap">
+  <div class="card login-card">
+    <div class="brand">
+      <div class="brand-name">REDUAN COMPUTER</div>
+      <div class="brand-slogan">শিখুন দক্ষতা, গড়ুন সফল ক্যারিয়ার।</div>
+      <p class="muted small mt-1">অ্যাডমিন ড্যাশবোর্ড — লগইন</p>
+    </div>
+    <div id="backend-notice"></div>
+    <div id="login-error" class="alert alert-error hidden"></div>
+    <form id="login-form">
+      <div class="form-group">
+        <label for="username">Username <span class="req">*</span></label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password <span class="req">*</span></label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-block" id="login-btn">লগইন করুন</button>
+    </form>
+    <p class="small muted mt-2">
+      প্রথম অ্যাডমিন অ্যাকাউন্টটি মালিক Apps Script-এ <code>createInitialAdmin</code> চালিয়ে
+      তৈরি করেন — এখানে কোনো ডিফল্ট ইউজারনেম বা পাসওয়ার্ড দেওয়া নেই। পাসওয়ার্ড
+      কোথাও সংরক্ষণ করা হয় না; লগইন সফল হলে শুধু সেশন টোকেন রাখা হয়।
+    </p>
+    <p class="small muted">ঠিকানা: হোসেনপুর থানা মসজিদ সংলগ্ন, হোসেনপুর, কিশোরগঞ্জ, বাংলাদেশ। ফোন: 01410645030</p>
+  </div>
+</div>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  var form = document.getElementById('login-form');
+  var btn = document.getElementById('login-btn');
+  var errBox = document.getElementById('login-error');
+
+  /* পাসওয়ার্ড পরিবর্তনের পর একবারের নোটিশ (admin-settings থেকে আসে):
+   * দেখিয়ে সাথে সাথে মুছে ফেলা হয় — রিফ্রেশ করলে আর দেখাবে না। */
+  var loginNotice = null;
+  try { loginNotice = sessionStorage.getItem('rc-login-notice'); sessionStorage.removeItem('rc-login-notice'); } catch (e) { /* ignore */ }
+  if (loginNotice) {
+    errBox.textContent = loginNotice;
+    errBox.className = 'alert alert-info';
+  }
+
+  /* Backend কনফিগার না থাকলে ফরম বন্ধ + নোটিশ দেখান। */
+  if (!RC_API.isConfigured()) {
+    RC_API.showBackendNotice(document.getElementById('backend-notice'));
+    form.querySelectorAll('input, button').forEach(function (el) { el.disabled = true; });
+  } else if (RC_API.tokenLooksValid()) {
+    /* আগের সেশন থাকলে যাচাই করে সরাসরি ড্যাশবোর্ডে পাঠান। */
+    RC_API.call('verifyToken', {}, { auth: true }).then(function (res) {
+      if (res.ok && res.data && res.data.valid) window.location.href = 'overview.html';
+    });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    errBox.classList.add('hidden');
+    var username = document.getElementById('username').value.trim();
+    var password = document.getElementById('password').value;
+    if (!username || !password) {
+      errBox.textContent = 'Username ও Password দুটোই দিন।';
+      errBox.classList.remove('hidden');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'লগইন হচ্ছে…';
+    RC_API.call('adminLogin', { username: username, password: password }, { auth: false })
+      .then(function (res) {
+        if (!res.ok) {
+          errBox.textContent = res.error || 'লগইন ব্যর্থ হয়েছে।';
+          errBox.classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = 'লগইন করুন';
+          return;
+        }
+        /* পাসওয়ার্ড সংরক্ষণ করা হয় না — শুধু টোকেন + মেয়াদ + ব্যবহারকারী। */
+        RC_API.setSession(res.data.token, res.data.expiresAt, {
+          username: res.data.username,
+          fullName: res.data.fullName,
+          role: res.data.role
+        });
+        window.location.href = 'overview.html';
+      });
+  });
+})();
+</script>
+</body>
+</html>

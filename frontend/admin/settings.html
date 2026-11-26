@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Website Settings — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Website Settings — ওয়েবসাইট সেটিংস</h2>
+    <p>প্রতিষ্ঠানের তথ্য ও পেমেন্ট নম্বর — এগুলো পাবলিক ওয়েবসাইট ও রসিদে দেখায়।</p>
+  </div>
+
+  <div class="card" style="max-width: 720px;">
+    <form id="settings-form">
+      <div class="form-group"><label>প্রতিষ্ঠানের নাম <span class="req">*</span></label><input type="text" id="s-business_name" required></div>
+      <div class="form-group"><label>স্লোগান</label><input type="text" id="s-slogan"></div>
+      <div class="form-group"><label>ঠিকানা</label><textarea id="s-address"></textarea></div>
+      <div class="form-group"><label>ফোন</label><input type="tel" id="s-phone"></div>
+      <div class="form-group"><label>মুদ্রা (Currency)</label><input type="text" id="s-currency" maxlength="3"></div>
+      <div class="form-group"><label>রসিদের নিচের লেখা (Receipt Footer)</label><input type="text" id="s-receipt_footer"></div>
+      <div class="form-group">
+        <label><input type="checkbox" id="s-admission_open"> ভর্তি খোলা আছে (Admission Open)</label>
+      </div>
+      <div class="form-group">
+        <label>পেমেন্ট নম্বর (bKash / Nagad ইত্যাদি)</label>
+        <textarea id="s-payment_numbers" placeholder="যেমন: bKash (Personal): 01XXXXXXXXX"></textarea>
+        <p class="form-hint">নোট: payment_numbers এখনো খালি — মালিক নিজে এখানে নম্বর বসাবেন। কোনো নম্বর অনুমান করে বসানো হয়নি।</p>
+      </div>
+      <button type="submit" class="btn">সেটিংস সংরক্ষণ করুন</button>
+    </form>
+    <div id="settings-result" class="alert alert-success hidden mt-2"></div>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('settings', 'Website Settings');
+
+  function boolVal(v) {
+    if (v === true) return true;
+    var s = String(v || '').trim().toLowerCase();
+    return s === 'true' || s === '1' || s === 'yes';
+  }
+
+  function loadSettings() {
+    RC_API.call('getSettings', {}).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'সেটিংস আনা যায়নি।', 'error'); return; }
+      var s = res.data || {};
+      document.getElementById('s-business_name').value = s.business_name || RC_CONFIG.BUSINESS_NAME || '';
+      document.getElementById('s-slogan').value = s.slogan || RC_CONFIG.SLOGAN || '';
+      document.getElementById('s-address').value = s.address || RC_CONFIG.ADDRESS || '';
+      document.getElementById('s-phone').value = s.phone || RC_CONFIG.PHONE || '';
+      document.getElementById('s-currency').value = s.currency || RC_CONFIG.CURRENCY || '';
+      document.getElementById('s-receipt_footer').value = s.receipt_footer || '';
+      document.getElementById('s-admission_open').checked = boolVal(s.admission_open);
+      document.getElementById('s-payment_numbers').value = s.payment_numbers || '';
+    });
+  }
+
+  document.getElementById('settings-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var settings = {
+      business_name: document.getElementById('s-business_name').value.trim(),
+      slogan: document.getElementById('s-slogan').value.trim(),
+      address: document.getElementById('s-address').value.trim(),
+      phone: document.getElementById('s-phone').value.trim(),
+      currency: document.getElementById('s-currency').value.trim(),
+      receipt_footer: document.getElementById('s-receipt_footer').value.trim(),
+      admission_open: document.getElementById('s-admission_open').checked ? 'TRUE' : 'FALSE',
+      payment_numbers: document.getElementById('s-payment_numbers').value.trim()
+    };
+    RC_API.call('updateSettings', { settings: settings }).then(function (res) {
+      var box = document.getElementById('settings-result');
+      if (!res.ok) { box.classList.add('hidden'); RC_ADMIN.toast(res.error || 'সেটিংস সংরক্ষণ করা যায়নি।', 'error'); return; }
+      box.classList.remove('hidden');
+      box.textContent = 'সেটিংস সংরক্ষিত হয়েছে।';
+    });
+  });
+
+  RC_ADMIN.guardPage().then(function (ok) { if (ok) loadSettings(); });
+})();
+</script>
+</body>
+</html>

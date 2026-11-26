@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payments — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Payments — পেমেন্ট</h2>
+    <p>নতুন পেমেন্ট লিখুন, পেমেন্ট ইতিহাস দেখুন ও রসিদ প্রিন্ট করুন।</p>
+  </div>
+
+  <!-- New Payment Entry -->
+  <div class="card mb-3">
+    <h3>নতুন পেমেন্ট লিখুন</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="pay-search">শিক্ষার্থী খুঁজুন (নাম / আইডি / মোবাইল)</label>
+        <input type="text" id="pay-search" placeholder="যেমন: রহিম, RC-2026-0001">
+      </div>
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <button class="btn" id="btn-pay-search">খুঁজুন</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="pay-student">শিক্ষার্থী নির্বাচন করুন <span class="req">*</span></label>
+      <select id="pay-student"><option value="">প্রথমে খুঁজুন</option></select>
+    </div>
+    <div id="pay-student-info" class="alert alert-info hidden"></div>
+    <form id="pay-form">
+      <div class="form-row">
+        <div class="form-group"><label>পরিমাণ <span class="req">*</span></label><input type="number" id="pay-amount" min="1" step="1" required></div>
+        <div class="form-group"><label>পেমেন্টের তারিখ <span class="req">*</span></label><input type="date" id="pay-date" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>পেমেন্ট মাধ্যম</label><select id="pay-method"></select></div>
+        <div class="form-group"><label>Transaction ID</label><input type="text" id="pay-txn" placeholder="একই Transaction ID দুবার ব্যবহার করা যাবে না"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>প্রেরকের নম্বর</label><input type="tel" id="pay-sender" placeholder="মোবাইল পেমেন্টের ক্ষেত্রে"></div>
+        <div class="form-group"><label>মন্তব্য</label><input type="text" id="pay-notes"></div>
+      </div>
+      <button type="submit" class="btn">পেমেন্ট সংরক্ষণ করুন</button>
+    </form>
+    <div id="pay-result" class="alert alert-success hidden mt-2"></div>
+  </div>
+
+  <!-- Receipt -->
+  <div class="card mb-3 hidden" id="receipt-card">
+    <h3>রসিদ</h3>
+    <div class="receipt" id="receipt">
+      <div class="text-center">
+        <h2>REDUAN COMPUTER</h2>
+        <p class="small">শিখুন দক্ষতা, গড়ুন সফল ক্যারিয়ার।</p>
+        <p class="small">হোসেনপুর থানা মসজিদ সংলগ্ন, হোসেনপুর, কিশোরগঞ্জ, বাংলাদেশ। ফোন: 01410645030</p>
+        <h3>পেমেন্ট রসিদ</h3>
+      </div>
+      <table>
+        <tbody id="receipt-body"></tbody>
+      </table>
+      <div class="sign-row">
+        <div class="sign-box">শিক্ষার্থীর স্বাক্ষর</div>
+        <div class="sign-box">অনুমোদিত স্বাক্ষর</div>
+      </div>
+      <p class="small text-center mt-2" id="receipt-footer">ধন্যবাদ — REDUAN COMPUTER</p>
+    </div>
+    <button class="btn mt-2 no-print" id="btn-print-receipt">🖨️ প্রিন্ট করুন</button>
+  </div>
+
+  <!-- Payment History -->
+  <div class="card">
+    <h3>পেমেন্ট ইতিহাস</h3>
+    <div class="toolbar">
+      <div class="form-group">
+        <label for="hist-student">Student ID</label>
+        <input type="text" id="hist-student" placeholder="যেমন: RC-2026-0001">
+      </div>
+      <div class="form-group"><label for="hist-from">From</label><input type="date" id="hist-from"></div>
+      <div class="form-group"><label for="hist-to">To</label><input type="date" id="hist-to"></div>
+      <button class="btn" id="btn-hist">ইতিহাস দেখুন</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Payment ID</th><th>Student</th><th>Course</th><th>Amount</th>
+          <th>Date</th><th>Method</th><th>Transaction ID</th><th>Received By</th><th>Action</th>
+        </tr></thead>
+        <tbody id="hist-body"><tr><td colspan="9" class="empty-state">ফিল্টার দিয়ে পেমেন্ট ইতিহাস দেখুন।</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('payments', 'Payments');
+  var methodSel = document.getElementById('pay-method');
+  RC_CONFIG.PAYMENT_METHODS.forEach(function (m) {
+    var o = document.createElement('option'); o.value = m; o.textContent = m; methodSel.appendChild(o);
+  });
+  document.getElementById('pay-date').value = RC_ADMIN.todayISO();
+
+  var studentSel = document.getElementById('pay-student');
+  var pickedStudents = [];
+
+  function showStudentInfo(s) {
+    var box = document.getElementById('pay-student-info');
+    box.classList.remove('hidden');
+    box.innerHTML = '<strong>' + RC_API.esc(s.fullName) + '</strong> (' + RC_API.esc(s.studentId) + ') — ' +
+      RC_API.esc(s.courseName) + ' / ' + RC_API.esc(s.batchName) + '<br>' +
+      'মোট ফি: ' + RC_API.fmtMoney(s.totalFee) + ' &nbsp;|&nbsp; পরিশোধিত: ' + RC_API.fmtMoney(s.paidAmount) +
+      ' &nbsp;|&nbsp; বকেয়া: ' + RC_API.fmtMoney(s.dueAmount) + ' &nbsp;|&nbsp; ' + RC_ADMIN.paymentStatusBadge(s.paymentStatus);
+  }
+
+  document.getElementById('btn-pay-search').addEventListener('click', function () {
+    var q = document.getElementById('pay-search').value.trim();
+    if (!q) { RC_ADMIN.toast('খোঁজার জন্য নাম, আইডি বা মোবাইল লিখুন।', 'error'); return; }
+    RC_API.call('searchStudents', { q: q }).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'শিক্ষার্থী খোঁজা যায়নি।', 'error'); return; }
+      pickedStudents = res.data || [];
+      studentSel.innerHTML = '<option value="">শিক্ষার্থী নির্বাচন করুন</option>';
+      if (!pickedStudents.length) { RC_ADMIN.toast('কোনো শিক্ষার্থী পাওয়া যায়নি।', 'error'); return; }
+      pickedStudents.forEach(function (s) {
+        var o = document.createElement('option');
+        o.value = s.studentId;
+        o.textContent = s.fullName + ' (' + s.studentId + ') — ' + s.courseName;
+        studentSel.appendChild(o);
+      });
+    });
+  });
+  studentSel.addEventListener('change', function () {
+    var s = pickedStudents.find(function (x) { return x.studentId === studentSel.value; });
+    if (s) showStudentInfo(s);
+  });
+
+  /* ---------- recordPayment + receipt ---------- */
+  document.getElementById('pay-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var studentId = studentSel.value;
+    if (!studentId) { RC_ADMIN.toast('প্রথমে একজন শিক্ষার্থী নির্বাচন করুন।', 'error'); return; }
+    var amount = Number(document.getElementById('pay-amount').value);
+    if (!amount || amount <= 0) { RC_ADMIN.toast('সঠিক পরিমাণ দিন।', 'error'); return; }
+    var payload = {
+      studentId: studentId,
+      amount: amount,
+      paymentDate: document.getElementById('pay-date').value,
+      paymentMethod: methodSel.value,
+      transactionId: document.getElementById('pay-txn').value.trim(),
+      senderNumber: document.getElementById('pay-sender').value.trim(),
+      notes: document.getElementById('pay-notes').value.trim()
+    };
+    RC_API.call('recordPayment', payload).then(function (res) {
+      var box = document.getElementById('pay-result');
+      if (!res.ok) { box.classList.add('hidden'); RC_ADMIN.toast(res.error || 'পেমেন্ট সংরক্ষণ করা যায়নি।', 'error'); return; }
+      var d = res.data || {};
+      box.classList.remove('hidden');
+      box.innerHTML = 'পেমেন্ট সংরক্ষিত হয়েছে — Payment ID: <strong>' + RC_API.esc(d.paymentId || '') + '</strong><br>' +
+        'মোট পরিশোধিত: ' + RC_API.fmtMoney(d.paidAmount) + ' &nbsp;|&nbsp; অবশিষ্ট বকেয়া: ' + RC_API.fmtMoney(d.dueAmount) +
+        ' &nbsp;|&nbsp; অবস্থা: ' + RC_API.esc(d.paymentStatus || '');
+      var s = pickedStudents.find(function (x) { return x.studentId === studentId; }) || {};
+      document.getElementById('receipt-body').innerHTML =
+        '<tr><td>শিক্ষার্থীর নাম</td><td>' + RC_API.esc(s.fullName || '') + '</td></tr>' +
+        '<tr><td>Student ID</td><td>' + RC_API.esc(studentId) + '</td></tr>' +
+        '<tr><td>কোর্স</td><td>' + RC_API.esc(s.courseName || '') + '</td></tr>' +
+        '<tr><td>Payment ID</td><td>' + RC_API.esc(d.paymentId || '') + '</td></tr>' +
+        '<tr><td>পেমেন্টের তারিখ</td><td>' + RC_API.esc(RC_API.fmtDate(payload.paymentDate)) + '</td></tr>' +
+        '<tr><td>পরিশোধিত পরিমাণ</td><td>' + RC_API.fmtMoney(amount) + '</td></tr>' +
+        '<tr><td>অবশিষ্ট বকেয়া</td><td>' + RC_API.fmtMoney(d.dueAmount) + '</td></tr>' +
+        '<tr><td>পেমেন্ট মাধ্যম</td><td>' + RC_API.esc(payload.paymentMethod) + '</td></tr>' +
+        (payload.transactionId ? '<tr><td>Transaction ID</td><td>' + RC_API.esc(payload.transactionId) + '</td></tr>' : '');
+      document.getElementById('receipt-card').classList.remove('hidden');
+      document.getElementById('receipt-card').scrollIntoView({ behavior: 'smooth' });
+      loadHistory();
+    });
+  });
+  document.getElementById('btn-print-receipt').addEventListener('click', function () { window.print(); });
+
+  /* ---------- Payment history ---------- */
+  var histBody = document.getElementById('hist-body');
+  var histCache = [];
+  function loadHistory() {
+    var payload = {};
+    var sid = document.getElementById('hist-student').value.trim();
+    var from = document.getElementById('hist-from').value;
+    var to = document.getElementById('hist-to').value;
+    if (sid) payload.studentId = sid;
+    if (from) payload.from = from;
+    if (to) payload.to = to;
+    RC_ADMIN.setLoading(histBody, true);
+    RC_API.call('getPaymentHistory', payload).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'পেমেন্ট ইতিহাস আনা যায়নি।', 'error'); RC_ADMIN.emptyRow(histBody, 9); return; }
+      histCache = res.data || [];
+      if (!histCache.length) { RC_ADMIN.emptyRow(histBody, 9, 'কোনো পেমেন্ট রেকর্ড পাওয়া যায়নি।'); return; }
+      histBody.innerHTML = histCache.map(function (p) {
+        return '<tr><td>' + RC_API.esc(p.paymentId) + '</td>' +
+          '<td>' + RC_API.esc(p.studentName) + ' (' + RC_API.esc(p.studentId) + ')</td>' +
+          '<td>' + RC_API.esc(p.courseName) + '</td>' +
+          '<td>' + RC_API.fmtMoney(p.amount) + '</td>' +
+          '<td>' + RC_API.esc(RC_API.fmtDate(p.paymentDate)) + '</td>' +
+          '<td>' + RC_API.esc(p.paymentMethod) + '</td>' +
+          '<td>' + RC_API.esc(p.transactionId || '—') + '</td>' +
+          '<td>' + RC_API.esc(p.receivedBy || '—') + '</td>' +
+          '<td><button class="btn btn-sm" data-receipt="' + RC_API.esc(p.paymentId) + '">Receipt</button></td></tr>';
+      }).join('');
+    });
+  }
+  document.getElementById('btn-hist').addEventListener('click', loadHistory);
+
+  histBody.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-receipt]');
+    if (!btn) return;
+    var p = histCache.find(function (x) { return x.paymentId === btn.getAttribute('data-receipt'); });
+    if (!p) return;
+    /* এই রসিদে অবশিষ্ট বকেয়া দেখানো যায় না — getPaymentHistory-তে
+     * dueAmount ফেরত আসে না। তাই শুধু পেমেন্টের তথ্যটুকুই দেখানো হয়। */
+    document.getElementById('receipt-body').innerHTML =
+      '<tr><td>শিক্ষার্থীর নাম</td><td>' + RC_API.esc(p.studentName) + '</td></tr>' +
+      '<tr><td>Student ID</td><td>' + RC_API.esc(p.studentId) + '</td></tr>' +
+      '<tr><td>কোর্স</td><td>' + RC_API.esc(p.courseName) + '</td></tr>' +
+      '<tr><td>Payment ID</td><td>' + RC_API.esc(p.paymentId) + '</td></tr>' +
+      '<tr><td>পেমেন্টের তারিখ</td><td>' + RC_API.esc(RC_API.fmtDate(p.paymentDate)) + '</td></tr>' +
+      '<tr><td>পরিশোধিত পরিমাণ</td><td>' + RC_API.fmtMoney(p.amount) + '</td></tr>' +
+      '<tr><td>পেমেন্ট মাধ্যম</td><td>' + RC_API.esc(p.paymentMethod) + '</td></tr>' +
+      (p.transactionId ? '<tr><td>Transaction ID</td><td>' + RC_API.esc(p.transactionId) + '</td></tr>' : '') +
+      (p.senderNumber ? '<tr><td>প্রেরকের নম্বর</td><td>' + RC_API.esc(p.senderNumber) + '</td></tr>' : '');
+    document.getElementById('receipt-card').classList.remove('hidden');
+    document.getElementById('receipt-card').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  RC_ADMIN.guardPage().then(function (ok) { if (ok) loadHistory(); });
+})();
+</script>
+</body>
+</html>

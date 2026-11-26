@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Management — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Expense Management — খরচ ব্যবস্থাপনা</h2>
+    <p>খরচ লিখুন ও প্রতিষ্ঠানের নগদ অবস্থা দেখুন।</p>
+  </div>
+
+  <div class="stat-grid mb-3">
+    <div class="stat-card"><div class="label">মোট আদায় (Total Collection)</div><div class="value" data-stat="totalPaid" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">মোট খরচ (Total Expenses)</div><div class="value" data-stat="totalExpenses" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">নগদ অবস্থা (Net Cash)</div><div class="value" data-stat="netCash" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">বকেয়া (Outstanding Due)</div><div class="value" data-stat="totalDue" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">এই মাসের আদায়</div><div class="value" data-stat="monthlyCollection" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">এই মাসের খরচ</div><div class="value" data-stat="monthlyExpenses" data-money="1">৳0</div></div>
+  </div>
+  <div class="alert alert-info">
+    <strong>মনে রাখবেন:</strong> বকেয়া টাকা নগদ নয় — বকেয়া হলো এখনো পাওনা টাকা।
+    Net Cash = বাস্তবে আদায় করা টাকা (Total Paid) − রেকর্ড করা খরচ (Total Expenses)।
+  </div>
+
+  <div class="card mb-3">
+    <h3>নতুন খরচ লিখুন</h3>
+    <form id="expense-form">
+      <div class="form-row">
+        <div class="form-group"><label>খরচের শিরোনাম <span class="req">*</span></label><input type="text" id="exp-title" placeholder="যেমন: শিক্ষকের বেতন — জানুয়ারি" required></div>
+        <div class="form-group"><label>বিভাগ <span class="req">*</span></label><select id="exp-category" required></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>পরিমাণ <span class="req">*</span></label><input type="number" id="exp-amount" min="1" step="1" required></div>
+        <div class="form-group"><label>তারিখ <span class="req">*</span></label><input type="date" id="exp-date" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>পেমেন্ট মাধ্যম</label><select id="exp-method"></select></div>
+        <div class="form-group"><label>বিবরণ</label><input type="text" id="exp-description"></div>
+      </div>
+      <button type="submit" class="btn">খরচ সংরক্ষণ করুন</button>
+    </form>
+    <div id="exp-result" class="alert alert-success hidden mt-2"></div>
+  </div>
+
+  <div class="card">
+    <h3>খরচের ইতিহাস</h3>
+    <div class="toolbar">
+      <div class="form-group">
+        <label for="filter-category">বিভাগ</label>
+        <select id="filter-category"><option value="">সব বিভাগ</option></select>
+      </div>
+      <div class="form-group">
+        <label for="filter-from">থেকে</label>
+        <input type="date" id="filter-from">
+      </div>
+      <div class="form-group">
+        <label for="filter-to">পর্যন্ত</label>
+        <input type="date" id="filter-to">
+      </div>
+      <button class="btn btn-outline" id="btn-exp-reload">তালিকা রিফ্রেশ</button>
+    </div>
+    <p class="small muted" id="exp-summary">—</p>
+    <div id="exp-totals" class="mb-3"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Expense ID</th><th>শিরোনাম</th><th>বিভাগ</th><th>পরিমাণ</th>
+          <th>তারিখ</th><th>মাধ্যম</th><th>বিবরণ</th><th>লিখেছেন</th>
+        </tr></thead>
+        <tbody id="expenses-body"><tr><td colspan="8" class="empty-state">Backend সংযুক্ত হলে খরচের ইতিহাস দেখাবে।</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('expenses', 'Expense Management');
+
+  var catSel = document.getElementById('exp-category');
+  RC_CONFIG.EXPENSE_CATEGORIES.forEach(function (c) {
+    var o = document.createElement('option'); o.value = c; o.textContent = c; catSel.appendChild(o);
+  });
+  var filterCatSel = document.getElementById('filter-category');
+  RC_CONFIG.EXPENSE_CATEGORIES.forEach(function (c) {
+    var fo = document.createElement('option'); fo.value = c; fo.textContent = c; filterCatSel.appendChild(fo);
+  });
+  var methodSel = document.getElementById('exp-method');
+  RC_CONFIG.PAYMENT_METHODS.forEach(function (m) {
+    var o = document.createElement('option'); o.value = m; o.textContent = m; methodSel.appendChild(o);
+  });
+  document.getElementById('exp-date').value = RC_ADMIN.todayISO();
+
+  function fillStats(data) {
+    document.querySelectorAll('[data-stat]').forEach(function (el) {
+      var val = Number(data[el.getAttribute('data-stat')]);
+      if (isNaN(val)) val = 0;
+      el.textContent = el.getAttribute('data-money') ? RC_API.fmtMoney(val) : String(val);
+    });
+  }
+
+  function loadStats() {
+    RC_API.call('getDashboardStats', {}).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'পরিসংখ্যান আনা যায়নি।', 'error'); return; }
+      fillStats(res.data || {});
+    });
+  }
+
+  /* খরচের ইতিহাস — admin action getExpenses।
+   * ফেরত: { expenses: [...], totalsByCategory: {...}, totalAmount, count } */
+  var expTbody = document.getElementById('expenses-body');
+  function renderExpenses(data) {
+    var list = (data && data.expenses) || [];
+    if (!list.length) { RC_ADMIN.emptyRow(expTbody, 8, 'এই শর্তে কোনো খরচ পাওয়া যায়নি।'); }
+    else {
+      expTbody.innerHTML = list.map(function (e) {
+        return '<tr>' +
+          '<td>' + RC_API.esc(e.expenseId) + '</td>' +
+          '<td class="wrap">' + RC_API.esc(e.title) + '</td>' +
+          '<td>' + RC_API.esc(e.category || '—') + '</td>' +
+          '<td>' + RC_API.fmtMoney(e.amount) + '</td>' +
+          '<td>' + RC_API.esc(RC_API.fmtDate(e.date)) + '</td>' +
+          '<td>' + RC_API.esc(e.paymentMethod || '—') + '</td>' +
+          '<td class="wrap">' + RC_API.esc(e.description || '—') + '</td>' +
+          '<td>' + RC_API.esc(e.createdBy || '—') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+    var summary = document.getElementById('exp-summary');
+    summary.textContent = 'মোট খরচ: ' + RC_API.fmtMoney(data ? data.totalAmount : 0) +
+      ' — রেকর্ড: ' + (data ? data.count : 0) + 'টি';
+    var totalsEl = document.getElementById('exp-totals');
+    var totals = (data && data.totalsByCategory) || {};
+    var keys = Object.keys(totals);
+    totalsEl.innerHTML = keys.length ? keys.map(function (k) {
+      return '<span class="badge">' + RC_API.esc(k) + ': ' + RC_API.esc(RC_API.fmtMoney(totals[k])) + '</span>';
+    }).join(' ') : '<span class="muted small">বিভাগভিত্তিক মোট নেই।</span>';
+  }
+
+  function loadExpenses() {
+    RC_ADMIN.setLoading(expTbody, true);
+    var payload = {};
+    var cat = filterCatSel.value;
+    var from = document.getElementById('filter-from').value;
+    var to = document.getElementById('filter-to').value;
+    if (cat) payload.category = cat;
+    if (from) payload.from = from;
+    if (to) payload.to = to;
+    RC_API.call('getExpenses', payload).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'খরচের ইতিহাস আনা যায়নি।', 'error'); RC_ADMIN.emptyRow(expTbody, 8); return; }
+      renderExpenses(res.data || {});
+    });
+  }
+
+  filterCatSel.addEventListener('change', loadExpenses);
+  document.getElementById('filter-from').addEventListener('change', loadExpenses);
+  document.getElementById('filter-to').addEventListener('change', loadExpenses);
+  document.getElementById('btn-exp-reload').addEventListener('click', loadExpenses);
+
+  document.getElementById('expense-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var amount = Number(document.getElementById('exp-amount').value);
+    if (!amount || amount <= 0) { RC_ADMIN.toast('সঠিক পরিমাণ দিন।', 'error'); return; }
+    var payload = {
+      title: document.getElementById('exp-title').value.trim(),
+      category: catSel.value,
+      amount: amount,
+      date: document.getElementById('exp-date').value,
+      paymentMethod: methodSel.value,
+      description: document.getElementById('exp-description').value.trim()
+    };
+    RC_API.call('createExpense', payload).then(function (res) {
+      var box = document.getElementById('exp-result');
+      if (!res.ok) { box.classList.add('hidden'); RC_ADMIN.toast(res.error || 'খরচ সংরক্ষণ করা যায়নি।', 'error'); return; }
+      box.classList.remove('hidden');
+      box.textContent = 'খরচ সংরক্ষিত হয়েছে — Expense ID: ' + (res.data && res.data.expenseId ? res.data.expenseId : '');
+      document.getElementById('expense-form').reset();
+      document.getElementById('exp-date').value = RC_ADMIN.todayISO();
+      loadStats();
+      loadExpenses();
+    });
+  });
+
+  RC_ADMIN.guardPage().then(function (ok) { if (ok) { loadStats(); loadExpenses(); } });
+})();
+</script>
+</body>
+</html>

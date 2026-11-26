@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Due Management — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Due Management — বকেয়া ব্যবস্থাপনা</h2>
+    <p>এক ক্লিকে বকেয়া তালিকা — ডিফল্ট ভিউতেই শুধু বকেয়া আছে এমন শিক্ষার্থীরা দেখায়।</p>
+  </div>
+
+  <div class="stat-grid mb-3">
+    <div class="stat-card"><div class="label">মোট বকেয়া</div><div class="value" data-stat="totalDue" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">বকেয়া আছে এমন শিক্ষার্থী</div><div class="value" data-stat="studentsWithDue">0</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="form-group grow">
+      <label for="search-q">খুঁজুন (নাম / আইডি / মোবাইল)</label>
+      <input type="text" id="search-q" placeholder="যেমন: রহিম, RC-2026-0001">
+    </div>
+    <div class="form-group">
+      <label for="filter-course">কোর্স</label>
+      <select id="filter-course"><option value="">সব কোর্স</option></select>
+    </div>
+    <button class="btn" id="btn-load">তালিকা দেখুন</button>
+  </div>
+
+  <h3>শিক্ষার্থী অনুযায়ী বকেয়া</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Student ID</th><th>Name</th><th>Mobile</th><th>Course</th><th>Batch</th>
+        <th>Total Fee</th><th>Paid</th><th>Due</th><th>Status</th>
+      </tr></thead>
+      <tbody id="due-body"><tr><td colspan="9" class="empty-state">Backend সংযুক্ত হলে বকেয়ার তালিকা দেখাবে।</td></tr></tbody>
+    </table>
+  </div>
+
+  <h3 class="mt-3">কোর্স অনুযায়ী বকেয়া (মোট)</h3>
+  <p class="small muted">নিচের মোটগুলো এই পাতার বকেয়া সারিগুলো থেকে হিসাব করা — সার্ভার থেকে আলাদা কোনো মোট আনা হয় না।</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Course</th><th>শিক্ষার্থী সংখ্যা</th><th>মোট বকেয়া</th></tr></thead>
+      <tbody id="course-due-body"><tr><td colspan="3" class="empty-state">—</td></tr></tbody>
+    </table>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('due', 'Due Management');
+  var tbody = document.getElementById('due-body');
+  var courseDueBody = document.getElementById('course-due-body');
+
+  function fillStats(data) {
+    document.querySelectorAll('[data-stat]').forEach(function (el) {
+      var val = Number(data[el.getAttribute('data-stat')]);
+      if (isNaN(val)) val = 0;
+      el.textContent = el.getAttribute('data-money') ? RC_API.fmtMoney(val) : String(val);
+    });
+  }
+
+  function renderCourseDue(rows) {
+    var grouped = {};
+    rows.forEach(function (s) {
+      var key = s.courseName || '—';
+      if (!grouped[key]) grouped[key] = { count: 0, due: 0 };
+      grouped[key].count += 1;
+      grouped[key].due += Number(s.dueAmount) || 0;
+    });
+    var keys = Object.keys(grouped);
+    if (!keys.length) { RC_ADMIN.emptyRow(courseDueBody, 3, 'কোনো বকেয়া নেই।'); return; }
+    courseDueBody.innerHTML = keys.map(function (k) {
+      return '<tr><td>' + RC_API.esc(k) + '</td><td>' + grouped[k].count + '</td><td>' + RC_API.fmtMoney(grouped[k].due) + '</td></tr>';
+    }).join('');
+  }
+
+  function renderRows(list) {
+    if (!list.length) {
+      RC_ADMIN.emptyRow(tbody, 9, 'কোনো বকেয়া পাওয়া যায়নি।');
+      RC_ADMIN.emptyRow(courseDueBody, 3, 'কোনো বকেয়া নেই।');
+      return;
+    }
+    tbody.innerHTML = list.map(function (s) {
+      return '<tr>' +
+        '<td>' + RC_API.esc(s.studentId) + '</td>' +
+        '<td>' + RC_API.esc(s.fullName) + '</td>' +
+        '<td>' + RC_API.esc(s.mobile) + '</td>' +
+        '<td>' + RC_API.esc(s.courseName) + '</td>' +
+        '<td>' + RC_API.esc(s.batchName) + '</td>' +
+        '<td>' + RC_API.fmtMoney(s.totalFee) + '</td>' +
+        '<td>' + RC_API.fmtMoney(s.paidAmount) + '</td>' +
+        '<td>' + RC_API.fmtMoney(s.dueAmount) + '</td>' +
+        '<td>' + RC_ADMIN.paymentStatusBadge(s.paymentStatus) + '</td>' +
+      '</tr>';
+    }).join('');
+    renderCourseDue(list);
+  }
+
+  function loadDue() {
+    var q = document.getElementById('search-q').value.trim();
+    var courseId = document.getElementById('filter-course').value;
+    /* withDue:true-ই ডিফল্ট ভিউ — "এক ক্লিকে বকেয়া তালিকা"। খোঁজা হলে
+     * searchStudents ব্যবহার করা হয়, তারপর বকেয়া আছে এমনগুলো ছেঁকে নেওয়া হয়। */
+    if (q) {
+      RC_ADMIN.setLoading(tbody, true);
+      RC_API.call('searchStudents', { q: q }).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'খোঁজা যায়নি।', 'error'); RC_ADMIN.emptyRow(tbody, 9); return; }
+        var rows = (res.data || []).filter(function (s) { return (Number(s.dueAmount) || 0) > 0; });
+        if (courseId) rows = rows.filter(function (s) { return s.courseId === courseId; });
+        renderRows(rows);
+      });
+      return;
+    }
+    var payload = { withDue: true };
+    if (courseId) payload.courseId = courseId;
+    RC_ADMIN.setLoading(tbody, true);
+    RC_API.call('getStudents', payload).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'বকেয়ার তালিকা আনা যায়নি।', 'error'); RC_ADMIN.emptyRow(tbody, 9); return; }
+      renderRows(res.data || []);
+    });
+  }
+
+  document.getElementById('btn-load').addEventListener('click', loadDue);
+  document.getElementById('search-q').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); loadDue(); } });
+
+  RC_ADMIN.guardPage().then(function (ok) {
+    if (!ok) return;
+    RC_ADMIN.loadCourseOptions(document.getElementById('filter-course'), 'সব কোর্স');
+    RC_API.call('getDashboardStats', {}).then(function (res) {
+      if (res.ok && res.data) fillStats(res.data);
+    });
+    loadDue();
+  });
+})();
+</script>
+</body>
+</html>

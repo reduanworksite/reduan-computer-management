@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Students — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Students — শিক্ষার্থী</h2>
+    <p>সব শিক্ষার্থীর তালিকা, খোঁজা ও ফিল্টার, নতুন ভর্তি, প্রোফাইল ও পেমেন্ট ইতিহাস।</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="form-group grow">
+      <label for="search-q">খুঁজুন (নাম / আইডি / মোবাইল)</label>
+      <input type="text" id="search-q" placeholder="যেমন: রহিম, RC-2026-0001, 01XXXXXXXXX">
+    </div>
+    <div class="form-group">
+      <label for="filter-status">অবস্থা</label>
+      <select id="filter-status"><option value="">সব</option></select>
+    </div>
+    <div class="form-group">
+      <label for="filter-course">কোর্স</label>
+      <select id="filter-course"><option value="">সব কোর্স</option></select>
+    </div>
+    <div class="form-group">
+      <label>&nbsp;</label>
+      <label class="small"><input type="checkbox" id="filter-due"> শুধু বকেয়া আছে এমন</label>
+    </div>
+    <button class="btn" id="btn-search">খুঁজুন</button>
+    <button class="btn btn-outline" id="btn-reset">রিসেট</button>
+    <button class="btn btn-gold" id="btn-new">+ নতুন শিক্ষার্থী</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Student ID</th><th>Name</th><th>Mobile</th><th>Course</th><th>Batch</th>
+        <th>Admission Date</th><th>Total Fee</th><th>Paid</th><th>Due</th><th>Status</th><th>Action</th>
+      </tr></thead>
+      <tbody id="students-body"><tr><td colspan="11" class="empty-state">Backend সংযুক্ত হলে শিক্ষার্থীর তালিকা দেখাবে।</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Create / Edit form modal -->
+  <div class="modal-backdrop hidden" id="student-modal">
+    <div class="modal">
+      <h3 id="student-modal-title">নতুন শিক্ষার্থী</h3>
+      <form id="student-form">
+        <input type="hidden" id="f-studentId">
+        <div class="form-row">
+          <div class="form-group"><label>পূর্ণ নাম <span class="req">*</span></label><input type="text" id="f-fullName" required></div>
+          <div class="form-group"><label>মোবাইল <span class="req">*</span></label><input type="tel" id="f-mobile" placeholder="01XXXXXXXXX" required></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>পিতার নাম <span class="req">*</span></label><input type="text" id="f-fatherName" required></div>
+          <div class="form-group"><label>মাতার নাম <span class="req">*</span></label><input type="text" id="f-motherName" required></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>বিকল্প মোবাইল</label><input type="tel" id="f-altMobile"></div>
+          <div class="form-group"><label>ইমেইল</label><input type="email" id="f-email"></div>
+        </div>
+        <div class="form-group"><label>বর্তমান ঠিকানা <span class="req">*</span></label><textarea id="f-presentAddress" required></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>কোর্স <span class="req">*</span></label><select id="f-courseId" required></select></div>
+          <div class="form-group"><label>ব্যাচ <span class="req">*</span></label><select id="f-batchId" required></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>ভর্তির তারিখ <span class="req">*</span></label><input type="date" id="f-admissionDate" required></div>
+          <div class="form-group"><label>মোট ফি (খালি রাখলে কোর্সের ফি প্রযোজ্য)</label><input type="number" id="f-totalFee" min="0" step="1"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>অবস্থা</label><select id="f-status"></select></div>
+          <div class="form-group"><label>ছবির লিংক (ঐচ্ছিক)</label><input type="text" id="f-photoUrl" placeholder="Google Drive লিংক"></div>
+        </div>
+        <div class="form-group"><label>মন্তব্য</label><textarea id="f-notes"></textarea></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="student-modal-close">বাতিল</button>
+          <button type="submit" class="btn" id="student-submit">সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Profile view modal -->
+  <div class="modal-backdrop hidden" id="profile-modal">
+    <div class="modal">
+      <h3>শিক্ষার্থীর প্রোফাইল</h3>
+      <div id="profile-body"></div>
+      <h4 class="mt-2">পেমেন্ট ইতিহাস</h4>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Payment ID</th><th>তারিখ</th><th>পরিমাণ</th><th>মাধ্যম</th><th>Transaction ID</th></tr></thead>
+        <tbody id="profile-payments"><tr><td colspan="5" class="empty-state">—</td></tr></tbody>
+      </table></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="profile-modal-close">বন্ধ করুন</button>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('students', 'Students');
+  var tbody = document.getElementById('students-body');
+  var studentsCache = [];
+
+  /* Status dropdown (config থেকে)। */
+  var statusSel = document.getElementById('filter-status');
+  RC_CONFIG.STUDENT_STATUSES.forEach(function (s) {
+    var o = document.createElement('option'); o.value = s; o.textContent = s; statusSel.appendChild(o);
+  });
+  var formStatus = document.getElementById('f-status');
+  RC_CONFIG.STUDENT_STATUSES.forEach(function (s) {
+    var o = document.createElement('option'); o.value = s; o.textContent = s; formStatus.appendChild(o);
+  });
+
+  function renderRows(list) {
+    studentsCache = list || [];
+    if (!studentsCache.length) { RC_ADMIN.emptyRow(tbody, 11, 'কোনো শিক্ষার্থী পাওয়া যায়নি।'); return; }
+    tbody.innerHTML = studentsCache.map(function (s) {
+      return '<tr>' +
+        '<td>' + RC_API.esc(s.studentId) + '</td>' +
+        '<td>' + RC_API.esc(s.fullName) + '</td>' +
+        '<td>' + RC_API.esc(s.mobile) + '</td>' +
+        '<td>' + RC_API.esc(s.courseName) + '</td>' +
+        '<td>' + RC_API.esc(s.batchName) + '</td>' +
+        '<td>' + RC_API.esc(RC_API.fmtDate(s.admissionDate)) + '</td>' +
+        '<td>' + RC_API.fmtMoney(s.totalFee) + '</td>' +
+        '<td>' + RC_API.fmtMoney(s.paidAmount) + '</td>' +
+        '<td>' + RC_API.fmtMoney(s.dueAmount) + '</td>' +
+        '<td>' + RC_ADMIN.studentStatusBadge(s.status) + '<br>' + RC_ADMIN.paymentStatusBadge(s.paymentStatus) + '</td>' +
+        '<td><button class="btn btn-sm" data-view="' + RC_API.esc(s.studentId) + '">View</button> ' +
+        '<button class="btn btn-sm btn-outline" data-edit="' + RC_API.esc(s.studentId) + '">Edit</button> ' +
+        '<button class="btn btn-sm btn-danger" data-archive="' + RC_API.esc(s.studentId) + '">Archive</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function loadStudents() {
+    var q = document.getElementById('search-q').value.trim();
+    if (q) {
+      RC_ADMIN.setLoading(tbody, true);
+      RC_API.call('searchStudents', { q: q }).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'খোঁজা যায়নি।', 'error'); RC_ADMIN.emptyRow(tbody, 11); return; }
+        renderRows(res.data || []);
+      });
+      return;
+    }
+    var payload = {};
+    var status = statusSel.value;
+    var courseId = document.getElementById('filter-course').value;
+    if (status) payload.status = status;
+    if (courseId) payload.courseId = courseId;
+    if (document.getElementById('filter-due').checked) payload.withDue = true;
+    RC_ADMIN.setLoading(tbody, true);
+    RC_API.call('getStudents', payload).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'শিক্ষার্থীর তালিকা আনা যায়নি।', 'error'); RC_ADMIN.emptyRow(tbody, 11); return; }
+      renderRows(res.data || []);
+    });
+  }
+
+  /* Row actions (event delegation)। */
+  tbody.addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    var id = btn.getAttribute('data-view') || btn.getAttribute('data-edit') || btn.getAttribute('data-archive');
+    var s = studentsCache.find(function (x) { return x.studentId === id; });
+    if (!s) return;
+    if (btn.hasAttribute('data-view')) openProfile(s);
+    if (btn.hasAttribute('data-edit')) openForm(s);
+    if (btn.hasAttribute('data-archive')) {
+      if (!RC_ADMIN.confirmDialog('শিক্ষার্থী ' + s.fullName + ' (' + s.studentId + ')-কে Archive করতে চান? ইতিহাস মুছবে না, শুধু তালিকা থেকে সরবে।')) return;
+      RC_API.call('updateStudent', { studentId: s.studentId, archive: true }).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'Archive করা যায়নি।', 'error'); return; }
+        RC_ADMIN.toast('শিক্ষার্থী Archive করা হয়েছে।', 'success');
+        loadStudents();
+      });
+    }
+  });
+
+  /* ---------- Profile modal ---------- */
+  function openProfile(s) {
+    document.getElementById('profile-body').innerHTML =
+      '<table class="kv-table"><tbody>' +
+      '<tr><td>Student ID</td><td>' + RC_API.esc(s.studentId) + '</td></tr>' +
+      '<tr><td>নাম</td><td>' + RC_API.esc(s.fullName) + '</td></tr>' +
+      '<tr><td>পিতার নাম</td><td>' + RC_API.esc(s.fatherName) + '</td></tr>' +
+      '<tr><td>মাতার নাম</td><td>' + RC_API.esc(s.motherName) + '</td></tr>' +
+      '<tr><td>মোবাইল</td><td>' + RC_API.esc(s.mobile) + (s.altMobile ? ' / ' + RC_API.esc(s.altMobile) : '') + '</td></tr>' +
+      '<tr><td>ইমেইল</td><td>' + RC_API.esc(s.email || '—') + '</td></tr>' +
+      '<tr><td>ঠিকানা</td><td>' + RC_API.esc(s.presentAddress) + '</td></tr>' +
+      '<tr><td>কোর্স</td><td>' + RC_API.esc(s.courseName) + '</td></tr>' +
+      '<tr><td>ব্যাচ</td><td>' + RC_API.esc(s.batchName) + '</td></tr>' +
+      '<tr><td>ভর্তির তারিখ</td><td>' + RC_API.esc(RC_API.fmtDate(s.admissionDate)) + '</td></tr>' +
+      '<tr><td>মোট ফি</td><td>' + RC_API.fmtMoney(s.totalFee) + '</td></tr>' +
+      '<tr><td>পরিশোধিত</td><td>' + RC_API.fmtMoney(s.paidAmount) + '</td></tr>' +
+      '<tr><td>বকেয়া</td><td>' + RC_API.fmtMoney(s.dueAmount) + '</td></tr>' +
+      '<tr><td>পেমেন্ট অবস্থা</td><td>' + RC_ADMIN.paymentStatusBadge(s.paymentStatus) + '</td></tr>' +
+      '<tr><td>অবস্থা</td><td>' + RC_ADMIN.studentStatusBadge(s.status) + '</td></tr>' +
+      '<tr><td>মন্তব্য</td><td>' + RC_API.esc(s.notes || '—') + '</td></tr>' +
+      (s.photoUrl ? '<tr><td>ছবি</td><td><a href="' + RC_API.esc(s.photoUrl) + '" target="_blank" rel="noopener">ছবি দেখুন</a></td></tr>' : '') +
+      '</tbody></table>';
+    var payBody = document.getElementById('profile-payments');
+    RC_ADMIN.setLoading(payBody, true);
+    RC_API.call('getPaymentHistory', { studentId: s.studentId }).then(function (res) {
+      if (!res.ok || !Array.isArray(res.data) || !res.data.length) {
+        RC_ADMIN.emptyRow(payBody, 5, 'কোনো পেমেন্ট রেকর্ড পাওয়া যায়নি।');
+        return;
+      }
+      payBody.innerHTML = res.data.map(function (p) {
+        return '<tr><td>' + RC_API.esc(p.paymentId) + '</td><td>' + RC_API.esc(RC_API.fmtDate(p.paymentDate)) + '</td>' +
+          '<td>' + RC_API.fmtMoney(p.amount) + '</td><td>' + RC_API.esc(p.paymentMethod) + '</td>' +
+          '<td>' + RC_API.esc(p.transactionId || '—') + '</td></tr>';
+      }).join('');
+    });
+    document.getElementById('profile-modal').classList.remove('hidden');
+  }
+  document.getElementById('profile-modal-close').addEventListener('click', function () {
+    document.getElementById('profile-modal').classList.add('hidden');
+  });
+
+  /* ---------- Create / Edit form ---------- */
+  var modal = document.getElementById('student-modal');
+  var form = document.getElementById('student-form');
+  var courseSel = document.getElementById('f-courseId');
+  var batchSel = document.getElementById('f-batchId');
+
+  function openForm(s) {
+    form.reset();
+    document.getElementById('f-studentId').value = s ? s.studentId : '';
+    document.getElementById('student-modal-title').textContent = s ? 'শিক্ষার্থী সম্পাদনা — ' + s.studentId : 'নতুন শিক্ষার্থী';
+    document.getElementById('f-admissionDate').value = s ? RC_API.fmtDate(s.admissionDate) : RC_ADMIN.todayISO();
+    if (s) {
+      document.getElementById('f-fullName').value = s.fullName || '';
+      document.getElementById('f-fatherName').value = s.fatherName || '';
+      document.getElementById('f-motherName').value = s.motherName || '';
+      document.getElementById('f-mobile').value = s.mobile || '';
+      document.getElementById('f-altMobile').value = s.altMobile || '';
+      document.getElementById('f-email').value = s.email || '';
+      document.getElementById('f-presentAddress').value = s.presentAddress || '';
+      document.getElementById('f-totalFee').value = (s.totalFee !== undefined && s.totalFee !== null) ? s.totalFee : '';
+      document.getElementById('f-status').value = s.status || 'Active';
+      document.getElementById('f-photoUrl').value = s.photoUrl || '';
+      document.getElementById('f-notes').value = s.notes || '';
+    }
+    /* Edit-এ কোর্স/ব্যাচ বদলানো যায় না — backend updateStudent-এ
+     * courseId/batchId নেয় না। */
+    courseSel.disabled = !!s;
+    batchSel.disabled = !!s;
+    modal.classList.remove('hidden');
+    RC_ADMIN.loadCourseOptions(courseSel).then(function () {
+      if (s) courseSel.value = s.courseId || '';
+      if (!s) courseSel.value = '';
+    });
+  }
+  document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+  document.getElementById('student-modal-close').addEventListener('click', function () { modal.classList.add('hidden'); });
+  courseSel.addEventListener('change', function () { RC_ADMIN.loadBatchOptions(batchSel, courseSel.value); });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var mobile = document.getElementById('f-mobile').value.trim();
+    if (!RC_API.isValidBdMobile(mobile)) { RC_ADMIN.toast('সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর দিন (01XXXXXXXXX)।', 'error'); return; }
+    var id = document.getElementById('f-studentId').value;
+    var totalFeeVal = document.getElementById('f-totalFee').value;
+    if (id) {
+      var upd = {
+        studentId: id,
+        fullName: document.getElementById('f-fullName').value.trim(),
+        fatherName: document.getElementById('f-fatherName').value.trim(),
+        motherName: document.getElementById('f-motherName').value.trim(),
+        mobile: mobile,
+        altMobile: document.getElementById('f-altMobile').value.trim(),
+        email: document.getElementById('f-email').value.trim(),
+        presentAddress: document.getElementById('f-presentAddress').value.trim(),
+        status: document.getElementById('f-status').value,
+        photoUrl: document.getElementById('f-photoUrl').value.trim(),
+        notes: document.getElementById('f-notes').value.trim()
+      };
+      RC_API.call('updateStudent', upd).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'আপডেট করা যায়নি।', 'error'); return; }
+        RC_ADMIN.toast('শিক্ষার্থীর তথ্য আপডেট হয়েছে।', 'success');
+        modal.classList.add('hidden');
+        loadStudents();
+      });
+    } else {
+      var payload = {
+        fullName: document.getElementById('f-fullName').value.trim(),
+        fatherName: document.getElementById('f-fatherName').value.trim(),
+        motherName: document.getElementById('f-motherName').value.trim(),
+        mobile: mobile,
+        presentAddress: document.getElementById('f-presentAddress').value.trim(),
+        courseId: courseSel.value,
+        batchId: batchSel.value,
+        admissionDate: document.getElementById('f-admissionDate').value,
+        altMobile: document.getElementById('f-altMobile').value.trim(),
+        email: document.getElementById('f-email').value.trim(),
+        status: document.getElementById('f-status').value,
+        photoUrl: document.getElementById('f-photoUrl').value.trim(),
+        notes: document.getElementById('f-notes').value.trim()
+      };
+      if (totalFeeVal !== '') payload.totalFee = Number(totalFeeVal);
+      RC_API.call('createStudent', payload).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'শিক্ষার্থী তৈরি করা যায়নি।', 'error'); return; }
+        RC_ADMIN.toast('নতুন শিক্ষার্থী তৈরি হয়েছে — Student ID: ' + (res.data && res.data.studentId ? res.data.studentId : ''), 'success');
+        modal.classList.add('hidden');
+        loadStudents();
+      });
+    }
+  });
+
+  document.getElementById('btn-search').addEventListener('click', loadStudents);
+  document.getElementById('search-q').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); loadStudents(); } });
+  document.getElementById('btn-reset').addEventListener('click', function () {
+    document.getElementById('search-q').value = '';
+    statusSel.value = '';
+    document.getElementById('filter-course').value = '';
+    document.getElementById('filter-due').checked = false;
+    loadStudents();
+  });
+
+  RC_ADMIN.guardPage().then(function (ok) {
+    if (!ok) return;
+    RC_ADMIN.loadCourseOptions(document.getElementById('filter-course'), 'সব কোর্স');
+    loadStudents();
+  });
+})();
+</script>
+</body>
+</html>

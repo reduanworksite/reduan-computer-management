@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backup &amp; Restore — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Backup &amp; Restore — ব্যাকআপ ও পুনরুদ্ধার</h2>
+    <p>পুরো ডেটাবেসের নিরাপদ কপি তৈরি করুন।</p>
+  </div>
+
+  <div class="card mb-3" style="max-width: 720px;">
+    <h3>ম্যানুয়াল ব্যাকআপ</h3>
+    <p>“Backup Now” চাপলে পুরো Spreadsheet (<code>REDUAN_COMPUTER_MASTER_DATABASE</code>)-এর
+      একটি পূর্ণ কপি Google Drive-এর <code>REDUAN_COMPUTER_DATABASE_BACKUPS</code>
+      ফোল্ডারে তারিখসহ নামে সংরক্ষিত হবে।</p>
+    <button class="btn" id="btn-backup">💾 Backup Now</button>
+    <div id="backup-result" class="alert alert-success hidden mt-2"></div>
+  </div>
+
+  <div class="card mb-3" style="max-width: 720px;">
+    <h3>Restore (পুনরুদ্ধার)</h3>
+    <p><strong>সৎ নোট:</strong> backend-এ স্বয়ংক্রিয় Restore করার কোনো action নেই —
+      Restore ম্যানুয়ালি করতে হয় এবং তা শুধু মালিক নিজে করবেন। Drive-এর ব্যাকআপ
+      ফোল্ডার থেকে সঠিক তারিখের কপিটি খুলে, যাচাই করে, তারপর মূল Spreadsheet-এ
+      ফেরত আনতে হবে। ভুল করে ডেটাবেস Overwrite/Delete করা যাবে না — Restore-এর আগে
+      মালিকের নিশ্চিতকরণ (confirmation) আবশ্যক।</p>
+  </div>
+
+  <div class="card" style="max-width: 720px;">
+    <h3>নির্ধারিত (Scheduled) ব্যাকআপ</h3>
+    <p>Apps Script Time Trigger দিয়ে প্রতিদিন নির্দিষ্ট সময়ে (যেমন রাত ১১টা)
+      স্বয়ংক্রিয় ব্যাকআপ চালু করা যায়। এটি এখনো চালু হয়নি — মালিকের অনুমতি
+      নিয়ে পরে চালু করা হবে।</p>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('backup', 'Backup & Restore');
+
+  document.getElementById('btn-backup').addEventListener('click', function () {
+    var btn = document.getElementById('btn-backup');
+    var box = document.getElementById('backup-result');
+    btn.disabled = true;
+    btn.textContent = 'ব্যাকআপ তৈরি হচ্ছে…';
+    RC_API.call('createBackup', {}).then(function (res) {
+      btn.disabled = false;
+      btn.textContent = '💾 Backup Now';
+      if (!res.ok) { box.classList.add('hidden'); RC_ADMIN.toast(res.error || 'ব্যাকআপ তৈরি করা যায়নি।', 'error'); return; }
+      var d = res.data || {};
+      box.classList.remove('hidden');
+      box.innerHTML = 'ব্যাকআপ তৈরি হয়েছে।<br>' +
+        'ফাইলের নাম: <strong>' + RC_API.esc(d.backupName || '') + '</strong><br>' +
+        (d.backupUrl ? 'লিংক: <a href="' + RC_API.esc(d.backupUrl) + '" target="_blank" rel="noopener">Drive-এ ব্যাকআপ খুলুন</a><br>' : '') +
+        'তৈরির সময়: ' + RC_API.esc(RC_API.fmtDateTime(d.createdAt));
+    });
+  });
+
+  RC_ADMIN.guardPage().then(function () { /* এই পাতায় লোড করার মতো কোনো তালিকা নেই */ });
+})();
+</script>
+</body>
+</html>

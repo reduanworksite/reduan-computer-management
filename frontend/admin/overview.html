@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overview — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Overview</h2>
+    <p>প্রতিষ্ঠানের সার্বিক চিত্র — সব সংখ্যা সরাসরি ডেটাবেস (Google Sheets) থেকে আসে।</p>
+  </div>
+
+  <div class="stat-grid" id="stat-grid">
+    <div class="stat-card"><div class="label">মোট শিক্ষার্থী</div><div class="value" data-stat="totalStudents">0</div></div>
+    <div class="stat-card"><div class="label">সক্রিয় শিক্ষার্থী</div><div class="value" data-stat="activeStudents">0</div></div>
+    <div class="stat-card"><div class="label">মোট কোর্স</div><div class="value" data-stat="totalCourses">0</div></div>
+    <div class="stat-card"><div class="label">মোট ব্যাচ</div><div class="value" data-stat="totalBatches">0</div></div>
+    <div class="stat-card"><div class="label">নতুন ভর্তি</div><div class="value" data-stat="newAdmissions">0</div></div>
+    <div class="stat-card"><div class="label">অপেক্ষমাণ ভর্তি আবেদন</div><div class="value" data-stat="pendingAdmissions">0</div></div>
+    <div class="stat-card"><div class="label">মোট রাজস্ব (Total Revenue)</div><div class="value" data-stat="totalRevenue" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">মোট আদায় (Total Paid)</div><div class="value" data-stat="totalPaid" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">মোট বকেয়া (Total Due)</div><div class="value" data-stat="totalDue" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">আজকের আদায়</div><div class="value" data-stat="todaysCollection" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">এই মাসের আদায়</div><div class="value" data-stat="monthlyCollection" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">মোট খরচ</div><div class="value" data-stat="totalExpenses" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">এই মাসের খরচ</div><div class="value" data-stat="monthlyExpenses" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">নগদ অবস্থা (Net Cash)</div><div class="value" data-stat="netCash" data-money="1">৳0</div></div>
+    <div class="stat-card"><div class="label">বকেয়া আছে এমন শিক্ষার্থী</div><div class="value" data-stat="studentsWithDue">0</div></div>
+  </div>
+
+  <div class="charts-grid mt-3">
+    <div class="card chart-card">
+      <h3>কোর্স অনুযায়ী শিক্ষার্থী</h3>
+      <p class="small muted">উৎস: Reports → Course-wise (getReports type: courseWise)</p>
+      <canvas id="chart-course" width="640" height="260"></canvas>
+      <p class="small muted" id="chart-course-empty">Backend সংযুক্ত হলে এখানে কোর্স অনুযায়ী শিক্ষার্থীর বার চার্ট দেখাবে।</p>
+    </div>
+    <div class="card chart-card">
+      <h3>আদায় বনাম বকেয়া</h3>
+      <p class="small muted">উৎস: Dashboard Stats — মোট আদায় (Total Paid) বনাম মোট বকেয়া (Total Due)</p>
+      <canvas id="chart-paid-due" width="640" height="260"></canvas>
+      <p class="small muted" id="chart-paid-due-empty">Backend সংযুক্ত হলে এখানে আদায় বনাম বকেয়ার বার চার্ট দেখাবে।</p>
+    </div>
+  </div>
+  <p class="small muted mt-2">নোট: বকেয়া টাকা নগদ নয় — আদায় করা টাকাই শুধু নগদ হিসেবে গণ্য হয়। Net Cash = আদায় − খরচ।</p>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('overview', 'Overview');
+
+  /* কোনো বাইরের চার্ট লাইব্রেরি নয় — plain canvas-এ বার চার্ট। */
+  function drawBarChart(canvas, labels, values, color) {
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    var padL = 10, padB = 34, padT = 12, padR = 10;
+    var max = Math.max.apply(null, values.concat([0]));
+    if (max <= 0) max = 1;
+    var n = labels.length;
+    var slot = (W - padL - padR) / Math.max(n, 1);
+    var barW = Math.min(slot * 0.6, 70);
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    ctx.font = '12px Hind Siliguri, sans-serif';
+    values.forEach(function (v, i) {
+      var h = (H - padB - padT) * (v / max);
+      var x = padL + slot * i + (slot - barW) / 2;
+      var y = H - padB - h;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, barW, h);
+      ctx.fillStyle = dark ? '#e8eefc' : '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(v), x + barW / 2, y - 5);
+      var label = String(labels[i] || '');
+      if (label.length > 14) label = label.slice(0, 13) + '…';
+      ctx.fillText(label, x + barW / 2, H - 12);
+    });
+  }
+
+  function fillStats(data) {
+    document.querySelectorAll('[data-stat]').forEach(function (el) {
+      var key = el.getAttribute('data-stat');
+      var val = Number(data[key]);
+      if (isNaN(val)) val = 0;
+      el.textContent = el.getAttribute('data-money') ? RC_API.fmtMoney(val) : String(val);
+    });
+  }
+
+  /* শুরুর অবস্থা: সব শূন্য (HTML-এই 0 বসানো আছে) — backend ছাড়া কোনো
+   * সংখ্যা বানানো হয় না। */
+  RC_ADMIN.guardPage().then(function (ok) {
+    if (!ok) return; /* Backend সংযুক্ত হয়নি — শূন্য + নোটিশই থাকবে। */
+    RC_API.call('getDashboardStats', {}).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'পরিসংখ্যান আনা যায়নি।', 'error'); return; }
+      var d = res.data || {};
+      fillStats(d);
+      drawBarChart(
+        document.getElementById('chart-paid-due'),
+        ['আদায় (Paid)', 'বকেয়া (Due)'],
+        [Number(d.totalPaid) || 0, Number(d.totalDue) || 0],
+        '#2563eb'
+      );
+      document.getElementById('chart-paid-due-empty').classList.add('hidden');
+    });
+    RC_API.call('getReports', { type: 'courseWise' }).then(function (res) {
+      if (!res.ok || !Array.isArray(res.data) || res.data.length === 0) return;
+      var labels = res.data.map(function (r) { return r.course; });
+      var values = res.data.map(function (r) { return Number(r.students) || 0; });
+      drawBarChart(document.getElementById('chart-course'), labels, values, '#1d4ed8');
+      document.getElementById('chart-course-empty').classList.add('hidden');
+    });
+  });
+})();
+</script>
+</body>
+</html>

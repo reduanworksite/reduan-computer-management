@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admissions — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Admissions — ভর্তি আবেদন</h2>
+    <p>অনলাইন ভর্তি আবেদন দেখুন, যাচাই করে Approve/Reject করুন। Approve করলে নতুন Student ID তৈরি হবে।</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="form-group">
+      <label for="filter-status">অবস্থা</label>
+      <select id="filter-status">
+        <option value="">সব</option>
+        <option value="Pending" selected>Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="filter-course">কোর্স</label>
+      <select id="filter-course"><option value="">সব কোর্স</option></select>
+    </div>
+    <button class="btn" id="btn-load">তালিকা দেখুন</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Application ID</th><th>Student Name</th><th>Mobile</th><th>Course</th><th>Batch</th>
+        <th>Paid</th><th>Method</th><th>Transaction ID</th><th>Status</th><th>Applied</th><th>Action</th>
+      </tr></thead>
+      <tbody id="adm-body"><tr><td colspan="11" class="empty-state">Backend সংযুক্ত হলে ভর্তি আবেদনের তালিকা দেখাবে।</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="modal-backdrop hidden" id="adm-modal">
+    <div class="modal">
+      <h3>আবেদনের বিস্তারিত</h3>
+      <div id="adm-body-detail"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="adm-modal-close">বন্ধ করুন</button>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('admissions', 'Admissions');
+  var tbody = document.getElementById('adm-body');
+  var cache = [];
+
+  function statusBadge(s) {
+    var map = { 'Pending': 'badge-warning', 'Approved': 'badge-success', 'Rejected': 'badge-danger' };
+    return '<span class="badge ' + (map[s] || '') + '">' + RC_API.esc(s || '—') + '</span>';
+  }
+
+  function renderRows(list) {
+    cache = list || [];
+    if (!cache.length) { RC_ADMIN.emptyRow(tbody, 11, 'কোনো আবেদন পাওয়া যায়নি।'); return; }
+    tbody.innerHTML = cache.map(function (a) {
+      var actions = '<button class="btn btn-sm" data-view="' + RC_API.esc(a.applicationId) + '">View</button>';
+      if (a.status === 'Pending') {
+        actions += ' <button class="btn btn-sm btn-gold" data-approve="' + RC_API.esc(a.applicationId) + '">Approve</button>' +
+          ' <button class="btn btn-sm btn-danger" data-reject="' + RC_API.esc(a.applicationId) + '">Reject</button>';
+      }
+      return '<tr>' +
+        '<td>' + RC_API.esc(a.applicationId) + '</td>' +
+        '<td>' + RC_API.esc(a.studentName) + '</td>' +
+        '<td>' + RC_API.esc(a.mobile) + '</td>' +
+        '<td>' + RC_API.esc(a.courseName) + '</td>' +
+        '<td>' + RC_API.esc(a.batchName) + '</td>' +
+        '<td>' + RC_API.fmtMoney(a.paidAmount) + '</td>' +
+        '<td>' + RC_API.esc(a.paymentMethod) + '</td>' +
+        '<td>' + RC_API.esc(a.transactionId || '—') + '</td>' +
+        '<td>' + statusBadge(a.status) + '</td>' +
+        '<td>' + RC_API.esc(RC_API.fmtDateTime(a.createdAt)) + '</td>' +
+        '<td>' + actions + '</td></tr>';
+    }).join('');
+  }
+
+  function loadAdmissions() {
+    var payload = {};
+    var status = document.getElementById('filter-status').value;
+    var courseId = document.getElementById('filter-course').value;
+    if (status) payload.status = status;
+    if (courseId) payload.courseId = courseId;
+    RC_ADMIN.setLoading(tbody, true);
+    RC_API.call('getAdmissions', payload).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'আবেদনের তালিকা আনা যায়নি।', 'error'); RC_ADMIN.emptyRow(tbody, 11); return; }
+      renderRows(res.data || []);
+    });
+  }
+
+  tbody.addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    var id = btn.getAttribute('data-view') || btn.getAttribute('data-approve') || btn.getAttribute('data-reject');
+    var a = cache.find(function (x) { return x.applicationId === id; });
+    if (!a) return;
+    if (btn.hasAttribute('data-view')) {
+      document.getElementById('adm-body-detail').innerHTML =
+        '<table class="kv-table"><tbody>' +
+        '<tr><td>Application ID</td><td>' + RC_API.esc(a.applicationId) + '</td></tr>' +
+        '<tr><td>শিক্ষার্থীর নাম</td><td>' + RC_API.esc(a.studentName) + '</td></tr>' +
+        '<tr><td>পিতার নাম</td><td>' + RC_API.esc(a.fatherName) + '</td></tr>' +
+        '<tr><td>মাতার নাম</td><td>' + RC_API.esc(a.motherName) + '</td></tr>' +
+        '<tr><td>মোবাইল</td><td>' + RC_API.esc(a.mobile) + (a.altMobile ? ' / ' + RC_API.esc(a.altMobile) : '') + '</td></tr>' +
+        '<tr><td>ইমেইল</td><td>' + RC_API.esc(a.email || '—') + '</td></tr>' +
+        '<tr><td>ঠিকানা</td><td>' + RC_API.esc(a.presentAddress) + '</td></tr>' +
+        '<tr><td>কোর্স</td><td>' + RC_API.esc(a.courseName) + '</td></tr>' +
+        '<tr><td>ব্যাচ</td><td>' + RC_API.esc(a.batchName) + '</td></tr>' +
+        '<tr><td>ভর্তির তারিখ</td><td>' + RC_API.esc(RC_API.fmtDate(a.admissionDate)) + '</td></tr>' +
+        '<tr><td>পেমেন্ট মাধ্যম</td><td>' + RC_API.esc(a.paymentMethod) + '</td></tr>' +
+        '<tr><td>Transaction ID</td><td>' + RC_API.esc(a.transactionId || '—') + '</td></tr>' +
+        '<tr><td>প্রেরকের নম্বর</td><td>' + RC_API.esc(a.senderNumber || '—') + '</td></tr>' +
+        '<tr><td>জমা দেওয়া টাকা</td><td>' + RC_API.fmtMoney(a.paidAmount) + '</td></tr>' +
+        '<tr><td>অতিরিক্ত তথ্য</td><td>' + RC_API.esc(a.additionalInfo || '—') + '</td></tr>' +
+        '<tr><td>অবস্থা</td><td>' + statusBadge(a.status) + '</td></tr>' +
+        '<tr><td>আবেদনের সময়</td><td>' + RC_API.esc(RC_API.fmtDateTime(a.createdAt)) + '</td></tr>' +
+        '</tbody></table>';
+      document.getElementById('adm-modal').classList.remove('hidden');
+    }
+    if (btn.hasAttribute('data-approve')) {
+      if (!RC_ADMIN.confirmDialog('আবেদন ' + a.applicationId + ' (' + a.studentName + ') Approve করতে চান? নতুন Student ID তৈরি হবে।')) return;
+      RC_API.call('approveAdmission', { applicationId: a.applicationId }).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'Approve করা যায়নি।', 'error'); return; }
+        RC_ADMIN.toast('আবেদন Approved — নতুন Student ID: ' + (res.data && res.data.studentId ? res.data.studentId : ''), 'success');
+        loadAdmissions();
+      });
+    }
+    if (btn.hasAttribute('data-reject')) {
+      if (!RC_ADMIN.confirmDialog('আবেদন ' + a.applicationId + ' (' + a.studentName + ') Reject করতে চান?')) return;
+      RC_API.call('rejectAdmission', { applicationId: a.applicationId }).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'Reject করা যায়নি।', 'error'); return; }
+        RC_ADMIN.toast('আবেদন Rejected হয়েছে।', 'success');
+        loadAdmissions();
+      });
+    }
+  });
+
+  document.getElementById('adm-modal-close').addEventListener('click', function () {
+    document.getElementById('adm-modal').classList.add('hidden');
+  });
+  document.getElementById('btn-load').addEventListener('click', loadAdmissions);
+
+  RC_ADMIN.guardPage().then(function (ok) {
+    if (!ok) return;
+    RC_ADMIN.loadCourseOptions(document.getElementById('filter-course'), 'সব কোর্স');
+    loadAdmissions();
+  });
+})();
+</script>
+</body>
+</html>
