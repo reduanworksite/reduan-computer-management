@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>REDUAN COMPUTER — Course Management System: Progress Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --navy:#0a1f44; --blue:#2563eb; --blue-dark:#1d4ed8; --gold:#c9a227;
+    --bg:#f4f6fb; --card:#ffffff; --text:#1e293b; --muted:#64748b;
+    --border:#e2e8f0; --green:#15803d; --green-bg:#dcfce7;
+    --amber:#b45309; --amber-bg:#fef3c7; --grey:#475569; --grey-bg:#e2e8f0;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Hind Siliguri","Noto Sans Bengali",Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.75; font-size:16px;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:0 16px 48px}
+  /* ---------- Header ---------- */
+  header.top{
+    background:var(--navy); color:#fff; border-bottom:4px solid var(--gold);
+  }
+  header.top .wrap{padding-top:36px;padding-bottom:32px}
+  .logo{font-family:Inter,sans-serif;font-weight:700;letter-spacing:.14em;font-size:.95rem;color:var(--gold)}
+  header.top h1{font-size:1.9rem;line-height:1.35;margin:10px 0 6px}
+  header.top p.sub{color:#cbd5e1;font-size:1.05rem}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+  .badge{
+    display:inline-block;padding:5px 14px;border-radius:999px;
+    font-size:.9rem;font-weight:600;
+  }
+  .badge.done{background:var(--green-bg);color:var(--green)}
+  .badge.waiting{background:var(--amber-bg);color:var(--amber)}
+  .badge.pending{background:var(--grey-bg);color:var(--grey)}
+  .badge.gold{background:var(--gold);color:var(--navy)}
+  .date{color:#cbd5e1;font-size:.95rem}
+  .actions{margin-top:20px}
+  button.print{
+    background:var(--gold);color:var(--navy);border:0;border-radius:8px;
+    font-family:inherit;font-weight:700;font-size:1rem;padding:10px 22px;cursor:pointer;
+  }
+  button.print:hover{background:#dcb93a}
+  /* ---------- Cards & sections ---------- */
+  section{margin-top:28px}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:24px 26px;box-shadow:0 1px 4px rgba(10,31,68,.06);
+  }
+  h2{
+    font-size:1.35rem;color:var(--navy);margin-bottom:4px;
+    padding-bottom:10px;border-bottom:2px solid var(--gold);display:inline-block;
+  }
+  .lead{color:var(--muted);margin:10px 0 4px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  .info-item{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .info-item .k{font-size:.85rem;color:var(--muted);font-weight:600}
+  .info-item .v{font-size:1.05rem;font-weight:600;color:var(--navy);margin-top:2px}
+  /* ---------- Summary stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+  .stat{
+    background:var(--navy);color:#fff;border-radius:var(--radius);
+    padding:20px 18px;text-align:center;
+  }
+  .stat .num{font-size:2rem;font-weight:700;line-height:1.2}
+  .stat .lbl{font-size:.95rem;color:#cbd5e1;margin-top:4px}
+  .stat.wait{background:#92400e}
+  .stat.todo{background:#334155}
+  /* ---------- Tables ---------- */
+  table{width:100%;border-collapse:collapse;margin-top:16px;font-size:.98rem}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:#f1f5f9;color:var(--navy);font-size:.92rem}
+  tr:last-child td{border-bottom:0}
+  .phase-no{font-weight:700;color:var(--navy);white-space:nowrap}
+  /* ---------- Lists ---------- */
+  ul{padding-left:20px;margin-top:12px}
+  ul li{margin-bottom:8px}
+  ul li::marker{color:var(--blue)}
+  .sheet-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{
+    background:#eff6ff;border:1px solid #bfdbfe;color:var(--navy);
+    border-radius:999px;padding:4px 13px;font-size:.92rem;font-weight:600;
+  }
+  .chip small{color:var(--muted);font-weight:500}
+  .note-box{
+    background:#fffbeb;border:1px solid #fde68a;border-radius:10px;
+    padding:16px 18px;margin-top:14px;
+  }
+  .note-box h3{color:var(--amber);font-size:1.05rem;margin-bottom:6px}
+  .callout{
+    background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid var(--blue);
+    border-radius:10px;padding:16px 18px;margin-top:14px;
+  }
+  .callout h3{color:var(--blue-dark);font-size:1.05rem;margin-bottom:6px}
+  .steps{counter-reset:step;margin-top:14px;padding-left:0;list-style:none}
+  .steps li{
+    counter-increment:step;position:relative;padding-left:44px;margin-bottom:14px;
+  }
+  .steps li::before{
+    content:counter(step);position:absolute;left:0;top:2px;width:30px;height:30px;
+    border-radius:50%;background:var(--blue);color:#fff;font-weight:700;
+    display:flex;align-items:center;justify-content:center;font-size:.95rem;
+  }
+  footer{
+    margin-top:36px;text-align:center;color:var(--muted);font-size:.95rem;
+    border-top:1px solid var(--border);padding-top:20px;
+  }
+  footer strong{color:var(--navy)}
+  /* ---------- Responsive ---------- */
+  @media (max-width:640px){
+    header.top h1{font-size:1.5rem}
+    .grid{grid-template-columns:1fr}
+    .stats{grid-template-columns:1fr}
+    .card{padding:20px 18px}
+    table{font-size:.9rem}
+    th,td{padding:9px 8px}
+  }
+  /* ---------- Print ---------- */
+  @media print{
+    body{background:#fff}
+    .actions{display:none}
+    .card{box-shadow:none;break-inside:avoid}
+    header.top{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .stat{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="logo">REDUAN COMPUTER</div>
+    <h1>Course Management System — Progress Report</h1>
+    <p class="sub">কোর্স ম্যানেজমেন্ট সিস্টেম — অগ্রগতি প্রতিবেদন</p>
+    <div class="meta-row">
+      <span class="badge gold">Phase 1–3 সম্পন্ন</span>
+      <span class="date">তারিখ: ২৬ নভেম্বর ২০২৬</span>
+    </div>
+    <div class="actions">
+      <button class="print" type="button" onclick="window.print()">🖨️ প্রিন্ট / PDF করুন</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- Project info -->
+  <section>
+    <div class="card">
+      <h2>প্রকল্পের তথ্য</h2>
+      <p class="lead">Computer Education &amp; Skill Development Center-এর নিজস্ব Digital Management Platform।</p>
+      <div class="grid">
+        <div class="info-item"><div class="k">প্রতিষ্ঠান</div><div class="v">REDUAN COMPUTER</div></div>
+        <div class="info-item"><div class="k">স্লোগান</div><div class="v">শিখুন দক্ষতা, গড়ুন সফল ক্যারিয়ার।</div></div>
+        <div class="info-item"><div class="k">ঠিকানা</div><div class="v">হোসেনপুর থানা মসজিদ সংলগ্ন, হোসেনপুর, কিশোরগঞ্জ, বাংলাদেশ।</div></div>
+        <div class="info-item"><div class="k">যোগাযোগ</div><div class="v">01410645030</div></div>
+        <div class="info-item"><div class="k">মুদ্রা</div><div class="v">বাংলাদেশি টাকা (৳)</div></div>
+        <div class="info-item"><div class="k">ভাষা</div><div class="v">বাংলা (প্রধান) · English</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Summary -->
+  <section>
+    <div class="stats">
+      <div class="stat"><div class="num">৩</div><div class="lbl">Phase সম্পন্ন (১–৩)</div></div>
+      <div class="stat wait"><div class="num">১</div><div class="lbl">অনুমতির অপেক্ষায় (Phase ৪)</div></div>
+      <div class="stat todo"><div class="num">৮</div><div class="lbl">Phase বাকি (৫–১২)</div></div>
+    </div>
+  </section>
+
+  <!-- Phase status -->
+  <section>
+    <div class="card">
+      <h2>Phase অনুযায়ী অগ্রগতি</h2>
+      <p class="lead">১২টি Phase-এর মধ্যে প্রথম ৩টি সম্পন্ন হয়েছে। Phase ৪ শুরু করার জন্য মালিকের অনুমতি প্রয়োজন।</p>
+      <table>
+        <thead>
+          <tr><th>Phase</th><th>কাজ</th><th>অবস্থা</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="phase-no">Phase 1</td><td>Project Architecture ও UI/UX Planning — সিস্টেমের নকশা, ডেটাবেস কাঠামো, Backend কোড</td><td><span class="badge done">✅ সম্পন্ন</span></td></tr>
+          <tr><td class="phase-no">Phase 2</td><td>Public Website — Landing Page, কোর্স তালিকা, কোর্স বিস্তারিত, অনলাইন ভর্তি ফরম</td><td><span class="badge done">✅ সম্পন্ন</span></td></tr>
+          <tr><td class="phase-no">Phase 3</td><td>Admin Dashboard — ১৪টি মেনুর সম্পূর্ণ ড্যাশবোর্ড, লগইন, পেমেন্ট, বকেয়া, রিপোর্ট</td><td><span class="badge done">✅ সম্পন্ন</span></td></tr>
+          <tr><td class="phase-no">Phase 4</td><td>Google Drive ও Google Sheets Database Setup — ফোল্ডার ও Master Database তৈরি</td><td><span class="badge waiting">⏳ অনুমতির অপেক্ষায়</span></td></tr>
+          <tr><td class="phase-no">Phase 5</td><td>Google Apps Script Backend Development ও Deployment</td><td><span class="badge pending">⏳ বাকি</span></td></tr>
+          <tr><td class="phase-no">Phase 6</td><td>Authentication ও Security Implementation — Admin লগইন, হ্যাশড পাসওয়ার্ড, সেশন</td><td><span class="badge pending">⏳ বাকি</span></td></tr>
+          <tr><td class="phase-no">Phase 7</td><td>Admission, Student, Course, Batch ও Payment Modules</td><td><span class="badge pending">⏳ বাকি</span></td></tr>
+          <tr><td class="phase-no">Phase 8</td><td>Reports, Expenses ও Backup System</td><td><span class="badge pending">⏳ বাকি</span></td></tr>
+          <tr><td class="phase-no">Phase 9</td><td>Frontend ও Backend Integration</td><td><span class="badge pending">⏳ বাকি</span></td></tr>
+          <tr><td class="phase-no">Phase 10</td><td>Full Testing ও Bug Fixing</td><td><span class="badge pending">⏳ বাকি</span></td></tr>
+          <tr><td class="phase-no">Phase 11</td><td>GitHub Repository Publishing</td><td><span class="badge pending">⏳ বাকি</span></td></tr>
+          <tr><td class="phase-no">Phase 12</td><td>Public Website ও Admin Dashboard Live Deployment</td><td><span class="badge pending">⏳ বাকি</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- What was built -->
+  <section>
+    <div class="card">
+      <h2>যা তৈরি হয়েছে</h2>
+
+      <h3 style="margin-top:18px;color:var(--navy)">📐 Architecture ও ডকুমেন্ট</h3>
+      <ul>
+        <li><strong>ARCHITECTURE.md</strong> — পুরো সিস্টেমের নকশা: তিন স্তর (Frontend, Apps Script API, Sheets Database), ডেটা প্রবাহ, ID কাঠামো, পেমেন্ট ও বকেয়ার হিসাবের নিয়ম, নিরাপত্তা মডেল, ব্যাকআপ মডেল।</li>
+        <li><strong>README.md</strong> — প্রকল্পের পরিচিতি, কাজের ধারা, নিরাপত্তা নির্দেশনা, ৩৩টি API Action-এর তালিকা।</li>
+        <li><strong>BACKEND_SETUP_GUIDE.md</strong> — বাংলায় ধাপে ধাপে সেটআপ নির্দেশিকা: Drive ফোল্ডার তৈরি থেকে Apps Script Deploy পর্যন্ত।</li>
+      </ul>
+
+      <h3 style="margin-top:18px;color:var(--navy)">🗄️ Database — ১০টি Sheet, মোট ১২০টি Column</h3>
+      <p class="lead">Spreadsheet: <strong>REDUAN_COMPUTER_MASTER_DATABASE</strong> · Drive Folder: <strong>REDUAN_COMPUTER_DATABASE</strong></p>
+      <div class="sheet-chips">
+        <span class="chip">Students <small>২৩টি কলাম</small></span>
+        <span class="chip">Courses <small>১৫টি কলাম</small></span>
+        <span class="chip">Batches <small>১৪টি কলাম</small></span>
+        <span class="chip">Admissions <small>২১টি কলাম</small></span>
+        <span class="chip">Payments <small>১২টি কলাম</small></span>
+        <span class="chip">Expenses <small>৯টি কলাম</small></span>
+        <span class="chip">AdminUsers <small>৯টি কলাম</small></span>
+        <span class="chip">Notifications <small>৭টি কলাম</small></span>
+        <span class="chip">Settings <small>৪টি কলাম</small></span>
+        <span class="chip">ActivityLogs <small>৬টি কলাম</small></span>
+      </div>
+      <ul>
+        <li>প্রতিটি Record-এর Unique ID (Student ID: RC-2026-0001, Application ID: APP-2026-0001, Payment ID: PAY-2026-0001)।</li>
+        <li>Delete-এর পরিবর্তে Soft Delete / Archive — ইতিহাস কখনো হারাবে না।</li>
+        <li>একই Transaction ID দিয়ে দ্বিতীয় পেমেন্ট বা আবেদন গ্রহণ করা হবে না।</li>
+      </ul>
+
+      <h3 style="margin-top:18px;color:var(--navy)">⚙️ Backend — Code.gs, ৩৩টি Action</h3>
+      <p class="lead">Google Apps Script backend (১,৩৩০ লাইন)। মূল Action গ্রুপগুলো:</p>
+      <ul>
+        <li><strong>Public:</strong> publicGetCourses, publicGetBatches, submitAdmission (Application ID তৈরি, Duplicate Transaction ID যাচাই), getSettingsPublic।</li>
+        <li><strong>Auth:</strong> adminLogin (SHA-256 হ্যাশ যাচাই, ৮ ঘণ্টার টোকেন), verifyToken, adminLogout, changePassword।</li>
+        <li><strong>Students ও Admissions:</strong> getStudents, searchStudents, createStudent, updateStudent, getAdmissions, approveAdmission (Student ID তৈরি), rejectAdmission।</li>
+        <li><strong>Courses ও Batches:</strong> getCourses, createCourse, updateCourse, deleteCourse (Soft-Delete), getBatches, createBatch, updateBatch।</li>
+        <li><strong>Payments ও Expenses:</strong> recordPayment (একই লেনদেনে Paid/Due/Status আপডেট), getPaymentHistory, getExpenses, createExpense।</li>
+        <li><strong>Reports, Backup ও অন্যান্য:</strong> getDashboardStats, getReports, createBackup, getNotifications, markNotificationRead, getSettings, updateSettings।</li>
+        <li>সব লেখা <strong>LockService</strong>-এর ভেতরে — একাধিক অ্যাডমিন একসাথে কাজ করলেও Duplicate বা Conflicting ডেটা হবে না।</li>
+      </ul>
+
+      <h3 style="margin-top:18px;color:var(--navy)">🖥️ Frontend — ২৬টি ফাইল</h3>
+      <ul>
+        <li><strong>Public Website:</strong> Homepage (Hero, কোর্স, Why Choose Us, ভর্তি প্রক্রিয়া, যোগাযোগ), Course Listing, Course Details, Online Admission Form (সব ফিল্ড, বাংলাদেশি মোবাইল যাচাই, সাফল্যে Application ID দেখায়)।</li>
+        <li><strong>Admin Dashboard — ১৪টি মেনু:</strong> Overview, Students, Admissions, Courses, Batches, Payments (রসিদ + প্রিন্ট), Due Management, Expense Management, Reports &amp; Analytics (CSV ডাউনলোড), Notifications, Website Settings, Backup &amp; Restore, Admin Settings, Logout।</li>
+        <li>Premium Blue &amp; White ডিজাইন, Hind Siliguri বাংলা ফন্ট, Light &amp; Dark Mode, মোবাইল রেসপন্সিভ।</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Honest notes -->
+  <section>
+    <div class="card">
+      <h2>সৎভাবে জানানো হচ্ছে</h2>
+      <div class="note-box">
+        <h3>⚠️ ভুয়া ডেটা কোথাও নেই</h3>
+        <ul>
+          <li>Dashboard-এর সব সংখ্যা Google Sheets-এর বাস্তব ডেটা থেকে আসবে। Backend এখনো সংযুক্ত হয়নি বলে Dashboard-এ <strong>“Backend সংযুক্ত হয়নি”</strong> দেখায় — কোনো বানানো শিক্ষার্থী, টাকা বা ভর্তির সংখ্যা দেখানো হয় না।</li>
+          <li>কোর্সের <strong>ফি, মেয়াদ, মোট ক্লাস, শিক্ষকের নাম</strong> — এগুলো এখনো নির্ধারিত হয়নি বলে অনুমান করে বসানো হয়নি; ফি খালি থাকলে “ফি জানতে যোগাযোগ করুন” দেখায়। মালিক Dashboard থেকে বসাবেন।</li>
+          <li><strong>bKash/Nagad পেমেন্ট নম্বর</strong> — এখনো জানানো হয়নি, তাই খালি রাখা হয়েছে; কোনো নম্বর অনুমান করে বসানো হয়নি।</li>
+          <li><strong>Admin পাসওয়ার্ড</strong> — কোথাও লেখা নেই (Frontend বা Backend কোনো কোডেই নয়)। সেটআপের সময় মালিক নিজে পাসওয়ার্ড ঠিক করবেন; এটি SHA-256 Hash করে সংরক্ষণ করা হবে।</li>
+          <li><strong>একাধিক Admin অ্যাকাউন্ট</strong> (listAdmins / createAdmin) — এখনো Backend-এ যোগ হয়নি; Phase 5-এ যোগ করা হবে। একজন Admin দিয়ে পুরো সিস্টেম চলবে।</li>
+          <li>Backend-এর Live পরীক্ষা (লগইন, ভর্তি সাবমিট, পেমেন্ট) এখনো হয়নি — কারণ Apps Script এখনো Deploy করা হয়নি। Deploy-এর পরেই আসল পরীক্ষা হবে।</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Needed from owner -->
+  <section>
+    <div class="card">
+      <h2>মালিকের কাছ থেকে যা প্রয়োজন</h2>
+      <div class="callout">
+        <h3>✅ Phase 4-এর অনুমতি (সবচেয়ে জরুরি)</h3>
+        <p>Google Drive-এ <strong>“REDUAN_COMPUTER_DATABASE”</strong> ফোল্ডার ও <strong>“REDUAN_COMPUTER_MASTER_DATABASE”</strong> Spreadsheet তৈরি করার অনুমতি। Google Sheets ও Google Drive ইতিমধ্যে সংযুক্ত আছে। অনুমতি পেলেই কাজ শুরু হবে — আপনার Google Password কখনো চাওয়া হবে না, Google-এর নিজস্ব Authorization স্ক্রিনেই আপনি অনুমোদন দেবেন।</p>
+      </div>
+      <ul>
+        <li><strong>ঐচ্ছিক সিদ্ধান্ত (এখনই না জানালেও চলবে):</strong> কোর্সের ফি ও মেয়াদ, bKash/Nagad পেমেন্ট নম্বর, Admin Username (ডিফল্ট: <code>admin</code>)। এগুলো পরে Dashboard থেকেও বসানো যাবে।</li>
+        <li><strong>Apps Script Deploy:</strong> Phase 5-এ Web App Deploy করার সময় আপনাকে নিজের ব্রাউজারে Google-এর অনুমোদন দিতে হবে।</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Next steps -->
+  <section>
+    <div class="card">
+      <h2>পরবর্তী ধাপ</h2>
+      <ol class="steps">
+        <li><strong>অনুমতি পেলেই Phase 4:</strong> Drive ফোল্ডার + Master Database Spreadsheet তৈরি, ১০টি Sheet ও ১২০টি Column সাজানো।</li>
+        <li><strong>Phase 5–6:</strong> Apps Script Web App Deploy, Initial Admin অ্যাকাউন্ট তৈরি, নিরাপত্তা যাচাই।</li>
+        <li><strong>Phase 7–8:</strong> ভর্তি, শিক্ষার্থী, কোর্স, ব্যাচ, পেমেন্ট ও রিপোর্ট মডিউল চালু; ব্যাকআপ ব্যবস্থা।</li>
+        <li><strong>Phase 9–10:</strong> Frontend ও Backend সংযোগ, সম্পূর্ণ পরীক্ষা ও ভুল সংশোধন।</li>
+        <li><strong>Phase 11–12:</strong> GitHub Repository প্রকাশ, Public Website ও Admin Dashboard Live।</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <strong>REDUAN COMPUTER</strong> — শিখুন দক্ষতা, গড়ুন সফল ক্যারিয়ার।<br />
+    হোসেনপুর থানা মসজিদ সংলগ্ন, হোসেনপুর, কিশোরগঞ্জ, বাংলাদেশ। · যোগাযোগ: 01410645030
+  </footer>
+
+</div>
+</body>
+</html>
