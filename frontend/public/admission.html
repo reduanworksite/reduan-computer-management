@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>অনলাইন ভর্তি — REDUAN COMPUTER</title>
+<meta name="description" content="REDUAN COMPUTER-এ অনলাইনে ভর্তি আবেদন করুন — কোর্স ও ব্যাচ বেছে নিয়ে ফরমটি পূরণ করুন।">
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="public.css">
+</head>
+<body>
+<header id="site-header" class="site-header"></header>
+
+<main>
+  <section class="section">
+    <div class="container">
+      <h1 class="section-title">অনলাইন ভর্তি ফরম</h1>
+      <p class="section-sub">সঠিক তথ্য দিয়ে ফরমটি পূরণ করুন। <span class="req" style="color: var(--danger);">*</span> চিহ্নিত ঘরগুলো পূরণ করা আবশ্যক। জমা দেওয়ার পর আপনি একটি Application ID পাবেন — সেটি সংরক্ষণ করুন।</p>
+
+      <div id="admission-notice"></div>
+      <div id="closed-notice"></div>
+      <div id="payment-numbers-box" class="hidden"></div>
+
+      <div class="card form-card">
+        <form id="admission-form" novalidate>
+          <h2 class="form-section-title">শিক্ষার্থীর তথ্য</h2>
+          <div class="form-group">
+            <label for="studentName">শিক্ষার্থীর পূর্ণ নাম <span class="req">*</span></label>
+            <input type="text" id="studentName" name="studentName" required autocomplete="name">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fatherName">পিতার নাম <span class="req">*</span></label>
+              <input type="text" id="fatherName" name="fatherName" required>
+            </div>
+            <div class="form-group">
+              <label for="motherName">মাতার নাম <span class="req">*</span></label>
+              <input type="text" id="motherName" name="motherName" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="mobile">মোবাইল নম্বর <span class="req">*</span></label>
+              <input type="tel" id="mobile" name="mobile" required placeholder="01XXXXXXXXX" autocomplete="tel">
+              <p class="form-hint">বাংলাদেশি মোবাইল নম্বর — 01 দিয়ে শুরু, মোট ১১ সংখ্যা।</p>
+            </div>
+            <div class="form-group">
+              <label for="altMobile">বিকল্প মোবাইল</label>
+              <input type="tel" id="altMobile" name="altMobile" placeholder="01XXXXXXXXX" autocomplete="tel">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email">ইমেইল</label>
+            <input type="email" id="email" name="email" autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="presentAddress">বর্তমান ঠিকানা <span class="req">*</span></label>
+            <textarea id="presentAddress" name="presentAddress" required></textarea>
+          </div>
+
+          <h2 class="form-section-title">কোর্স ও ব্যাচ</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="courseId">কোর্স নির্বাচন করুন <span class="req">*</span></label>
+              <select id="courseId" name="courseId" required>
+                <option value="">— কোর্স বেছে নিন —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="batchId">ব্যাচ নির্বাচন করুন <span class="req">*</span></label>
+              <select id="batchId" name="batchId" required disabled>
+                <option value="">— প্রথমে কোর্স বেছে নিন —</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="admissionDate">ভর্তির তারিখ <span class="req">*</span></label>
+            <input type="date" id="admissionDate" name="admissionDate" required>
+          </div>
+
+          <h2 class="form-section-title">পেমেন্টের তথ্য</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="paymentMethod">পেমেন্ট মাধ্যম</label>
+              <select id="paymentMethod" name="paymentMethod">
+                <option value="">— বেছে নিন —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="paidAmount">জমা দেওয়া টাকা</label>
+              <input type="number" id="paidAmount" name="paidAmount" min="0" step="1" value="0">
+              <p class="form-hint">এখনো টাকা না দিয়ে থাকলে ০ লিখুন।</p>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="transactionId">ট্রানজ্যাকশন আইডি</label>
+              <input type="text" id="transactionId" name="transactionId" autocomplete="off">
+              <p class="form-hint">একই ট্রানজ্যাকশন আইডি দিয়ে দ্বিতীয় আবেদন গ্রহণ করা হয় না।</p>
+            </div>
+            <div class="form-group">
+              <label for="senderNumber">প্রেরকের নম্বর</label>
+              <input type="tel" id="senderNumber" name="senderNumber" placeholder="01XXXXXXXXX" autocomplete="tel">
+            </div>
+          </div>
+
+          <h2 class="form-section-title">অতিরিক্ত তথ্য</h2>
+          <div class="form-group">
+            <label for="additionalInfo">অতিরিক্ত তথ্য</label>
+            <textarea id="additionalInfo" name="additionalInfo" placeholder="আপনার কোনো প্রশ্ন বা মন্তব্য থাকলে লিখুন (ঐচ্ছিক)।"></textarea>
+          </div>
+
+          <div id="form-error" class="alert alert-error hidden" role="alert"></div>
+          <button type="submit" id="submit-btn" class="btn btn-block">আবেদন জমা দিন</button>
+          <p class="form-hint text-center mt-2">জমা দেওয়ার পর আপনার Application ID দেখানো হবে।</p>
+        </form>
+
+        <div id="confirmation-panel" class="confirmation-panel hidden">
+          <h2>আবেদন সফলভাবে জমা হয়েছে!</h2>
+          <p>আপনার Application ID:</p>
+          <div><span class="application-id" id="application-id-text"></span></div>
+          <p><button type="button" class="btn btn-outline btn-sm" id="copy-app-id">Application ID কপি করুন</button></p>
+          <p>অবস্থা: <strong>Pending</strong> — আপনার আবেদনটি পর্যালোচনার অপেক্ষায় আছে। প্রতিষ্ঠান থেকে যোগাযোগ করা হবে।</p>
+          <p class="muted small">Application ID-টি সংরক্ষণ করুন — ভর্তি নিশ্চিতকরণে এটি লাগবে।</p>
+          <p><a class="btn btn-outline" href="courses.html">আরও কোর্স দেখুন</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="site-footer" class="site-footer"></footer>
+
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="public.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_PUBLIC.renderHeader('admission');
+  RC_PUBLIC.renderFooter();
+
+  var form = document.getElementById('admission-form');
+  var courseSelect = document.getElementById('courseId');
+  var batchSelect = document.getElementById('batchId');
+  var submitBtn = document.getElementById('submit-btn');
+  var formError = document.getElementById('form-error');
+  var noticeBox = document.getElementById('admission-notice');
+  var closedBox = document.getElementById('closed-notice');
+  var paymentBox = document.getElementById('payment-numbers-box');
+  var confirmationPanel = document.getElementById('confirmation-panel');
+  var configured = RC_API.isConfigured();
+
+  document.getElementById('admissionDate').value = RC_PUBLIC.todayISO();
+
+  /* Payment methods come from config (DATABASE.md list) — no invented values. */
+  var methods = (window.RC_CONFIG && window.RC_CONFIG.PAYMENT_METHODS) || [];
+  methods.forEach(function (m) {
+    var opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    document.getElementById('paymentMethod').appendChild(opt);
+  });
+
+  function showError(msg) {
+    formError.textContent = msg;
+    formError.classList.remove('hidden');
+    formError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function clearError() {
+    formError.textContent = '';
+    formError.classList.add('hidden');
+  }
+
+  if (!configured) {
+    noticeBox.innerHTML = RC_API.backendNoticeHTML();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Backend সংযুক্ত হয়নি — আবেদন জমা দেওয়া যাবে না';
+    var note = document.createElement('p');
+    note.className = 'alert alert-info';
+    note.textContent = 'Backend সংযুক্ত না হওয়া পর্যন্ত এই ফরম জমা দেওয়া যাবে না। সরাসরি ভর্তির জন্য প্রতিষ্ঠানে যোগাযোগ করুন।';
+    form.parentNode.insertBefore(note, form);
+  }
+
+  /* Settings: admission open/closed + payment numbers (only if the API
+   * returns a non-empty value — never invented). */
+  RC_PUBLIC.loadPublicSettings().then(function (s) {
+    if (!s) return;
+    if (!RC_PUBLIC.isAdmissionOpen(s)) {
+      closedBox.innerHTML = '<div class="alert alert-error">এই মুহূর্তে ভর্তি বন্ধ আছে। বিস্তারিত জানতে প্রতিষ্ঠানে যোগাযোগ করুন।</div>';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'ভর্তি বন্ধ আছে';
+    }
+    var pn = RC_PUBLIC.paymentNumbersText(s.payment_numbers);
+    if (pn) {
+      paymentBox.classList.remove('hidden');
+      paymentBox.innerHTML = '<div class="payment-numbers"><strong>টাকা পাঠানোর নম্বর</strong>\n' + RC_API.esc(pn) + '</div>';
+    }
+  });
+
+  /* Courses dropdown; preselect ?course= */
+  var preselectCourse = RC_PUBLIC.getQueryParam('course');
+  var preselectBatch = RC_PUBLIC.getQueryParam('batch');
+  var coursesLoaded = [];
+
+  function fillBatches(courseId, preselect) {
+    batchSelect.innerHTML = '';
+    batchSelect.disabled = true;
+    if (!courseId) {
+      batchSelect.innerHTML = '<option value="">— প্রথমে কোর্স বেছে নিন —</option>';
+      return;
+    }
+    batchSelect.innerHTML = '<option value="">ব্যাচ লোড হচ্ছে…</option>';
+    RC_PUBLIC.loadBatches(courseId).then(function (bResult) {
+      if (bResult.notConfigured) {
+        batchSelect.innerHTML = '<option value="">কোনো ব্যাচ খোলা নেই</option>';
+        return;
+      }
+      if (bResult.error) {
+        batchSelect.innerHTML = '<option value="">' + RC_API.esc(bResult.error) + '</option>';
+        return;
+      }
+      if (!bResult.batches.length) {
+        batchSelect.innerHTML = '<option value="">কোনো ব্যাচ খোলা নেই</option>';
+        return;
+      }
+      batchSelect.disabled = false;
+      batchSelect.innerHTML = '<option value="">— ব্যাচ বেছে নিন —</option>';
+      bResult.batches.forEach(function (b) {
+        var opt = document.createElement('option');
+        opt.value = b.batchId || '';
+        opt.textContent = (b.batchName || '') +
+          (b.startDate ? ' — শুরু: ' + RC_API.fmtDate(b.startDate) : '') +
+          (b.seatsLeft !== '' && b.seatsLeft !== null && b.seatsLeft !== undefined ? ' — খালি আসন: ' + b.seatsLeft : '');
+        batchSelect.appendChild(opt);
+      });
+      if (preselect) {
+        batchSelect.value = preselect;
+        if (!batchSelect.value) batchSelect.value = '';
+      }
+    });
+  }
+
+  RC_PUBLIC.loadCourses().then(function (result) {
+    if (result.notConfigured) {
+      courseSelect.innerHTML = '<option value="">Backend সংযুক্ত হয়নি — কোর্সের তালিকা পাওয়া যাচ্ছে না</option>';
+      return;
+    }
+    if (result.error) {
+      courseSelect.innerHTML = '<option value="">' + RC_API.esc(result.error) + '</option>';
+      return;
+    }
+    coursesLoaded = result.courses;
+    courseSelect.innerHTML = '<option value="">— কোর্স বেছে নিন —</option>';
+    result.courses.forEach(function (c) {
+      var opt = document.createElement('option');
+      opt.value = c.courseId || '';
+      opt.textContent = RC_PUBLIC.courseDisplayName(c);
+      courseSelect.appendChild(opt);
+    });
+    if (preselectCourse) {
+      courseSelect.value = preselectCourse;
+      if (courseSelect.value) fillBatches(preselectCourse, preselectBatch);
+    }
+  });
+
+  courseSelect.addEventListener('change', function () {
+    fillBatches(courseSelect.value, '');
+  });
+
+  /* ---------- Submit ---------- */
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearError();
+    if (!configured) {
+      showError('Backend সংযুক্ত হয়নি — আবেদন জমা দেওয়া যাবে না।');
+      return;
+    }
+
+    var v = function (id) { return document.getElementById(id).value.trim(); };
+    var studentName = v('studentName');
+    var fatherName = v('fatherName');
+    var motherName = v('motherName');
+    var mobile = v('mobile').replace(/[\s-]/g, '');
+    var altMobile = v('altMobile').replace(/[\s-]/g, '');
+    var email = v('email');
+    var presentAddress = v('presentAddress');
+    var courseId = v('courseId');
+    var batchId = v('batchId');
+    var admissionDate = v('admissionDate');
+    var paymentMethod = v('paymentMethod');
+    var transactionId = v('transactionId');
+    var senderNumber = v('senderNumber').replace(/[\s-]/g, '');
+    var paidAmountRaw = v('paidAmount');
+    var additionalInfo = v('additionalInfo');
+
+    if (!studentName) return showError('শিক্ষার্থীর পূর্ণ নাম লিখুন।');
+    if (!fatherName) return showError('পিতার নাম লিখুন।');
+    if (!motherName) return showError('মাতার নাম লিখুন।');
+    if (!mobile) return showError('মোবাইল নম্বর লিখুন।');
+    if (!RC_API.isValidBdMobile(mobile)) return showError('সঠিক বাংলাদেশি মোবাইল নম্বর লিখুন (01XXXXXXXXX)।');
+    if (altMobile && !RC_API.isValidBdMobile(altMobile)) return showError('বিকল্প মোবাইল নম্বরটি সঠিক নয় (01XXXXXXXXX)।');
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError('সঠিক ইমেইল ঠিকানা লিখুন।');
+    if (!presentAddress) return showError('বর্তমান ঠিকানা লিখুন।');
+    if (!courseId) return showError('একটি কোর্স নির্বাচন করুন।');
+    if (!batchId) return showError('একটি ব্যাচ নির্বাচন করুন।');
+    if (!admissionDate) return showError('ভর্তির তারিখ দিন।');
+    if (senderNumber && !RC_API.isValidBdMobile(senderNumber)) return showError('প্রেরকের নম্বরটি সঠিক নয় (01XXXXXXXXX)।');
+    var paidAmount = paidAmountRaw === '' ? 0 : Number(paidAmountRaw);
+    if (isNaN(paidAmount) || paidAmount < 0) return showError('জমা দেওয়া টাকার পরিমাণ সঠিকভাবে লিখুন।');
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'জমা দেওয়া হচ্ছে…';
+
+    RC_API.call('submitAdmission', {
+      studentName: studentName,
+      fatherName: fatherName,
+      motherName: motherName,
+      mobile: mobile,
+      altMobile: altMobile,
+      email: email,
+      presentAddress: presentAddress,
+      courseId: courseId,
+      batchId: batchId,
+      admissionDate: admissionDate,
+      paymentMethod: paymentMethod,
+      transactionId: transactionId,
+      senderNumber: senderNumber,
+      paidAmount: paidAmount,
+      additionalInfo: additionalInfo
+    }, { auth: false }).then(function (res) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'আবেদন জমা দিন';
+      if (!res.ok) {
+        /* API error shown verbatim — including duplicate Transaction ID. */
+        showError(res.error || 'আবেদন জমা দেওয়া যায়নি। আবার চেষ্টা করুন।');
+        return;
+      }
+      var appId = (res.data && res.data.applicationId) || '';
+      document.getElementById('application-id-text').textContent = appId || '—';
+      form.classList.add('hidden');
+      confirmationPanel.classList.remove('hidden');
+      confirmationPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }).catch(function () {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'আবেদন জমা দিন';
+      showError('ইন্টারনেট বা সার্ভারের সঙ্গে সংযোগ করা যাচ্ছে না। আবার চেষ্টা করুন।');
+    });
+  });
+
+  document.getElementById('copy-app-id').addEventListener('click', function () {
+    var text = document.getElementById('application-id-text').textContent;
+    var done = function () { this.textContent = 'কপি হয়েছে!'; }.bind(this);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { /* clipboard unavailable */ });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (err) { /* ignore */ }
+      ta.remove();
+    }
+  });
+})();
+</script>
+</body>
+</html>

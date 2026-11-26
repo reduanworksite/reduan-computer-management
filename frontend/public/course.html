@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>কোর্সের বিস্তারিত — REDUAN COMPUTER</title>
+<meta name="description" content="REDUAN COMPUTER-এর একটি কোর্সের বিস্তারিত তথ্য ও খোলা ব্যাচের তালিকা।">
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="public.css">
+</head>
+<body>
+<header id="site-header" class="site-header"></header>
+
+<main>
+  <section class="section">
+    <div class="container">
+      <div id="course-notice"></div>
+      <div id="course-detail">
+        <p class="muted">কোর্সের তথ্য লোড হচ্ছে…</p>
+      </div>
+
+      <div class="mt-3">
+        <h2 class="section-title">খোলা ব্যাচসমূহ</h2>
+        <div id="batch-notice"></div>
+        <div id="batch-list" class="batch-list">
+          <p class="muted">ব্যাচের তালিকা লোড হচ্ছে…</p>
+        </div>
+      </div>
+
+      <p class="mt-3"><a class="btn btn-outline" href="courses.html">← সব কোর্স দেখুন</a></p>
+    </div>
+  </section>
+</main>
+
+<footer id="site-footer" class="site-footer"></footer>
+
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="public.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_PUBLIC.renderHeader('courses');
+  RC_PUBLIC.renderFooter();
+
+  var detail = document.getElementById('course-detail');
+  var courseNotice = document.getElementById('course-notice');
+  var batchList = document.getElementById('batch-list');
+  var batchNotice = document.getElementById('batch-notice');
+  var courseId = RC_PUBLIC.getQueryParam('id');
+
+  function invalidId(message) {
+    detail.innerHTML = '<div class="alert alert-error">' + RC_API.esc(message) + '</div>' +
+      '<p><a class="btn" href="courses.html">কোর্সসমূহ দেখুন</a></p>';
+    batchList.innerHTML = '';
+  }
+
+  if (!courseId) {
+    invalidId('কোনো কোর্স নির্বাচন করা হয়নি। কোর্সসমূহ পাতা থেকে একটি কোর্স বেছে নিন।');
+    return;
+  }
+
+  RC_PUBLIC.loadCourses().then(function (result) {
+    if (result.notConfigured) {
+      courseNotice.innerHTML = RC_API.backendNoticeHTML();
+      invalidId('Backend সংযুক্ত না থাকায় কোর্সের বিস্তারিত তথ্য দেখানো যাচ্ছে না।');
+      return;
+    }
+    if (result.error) {
+      invalidId(result.error);
+      return;
+    }
+    var course = null;
+    result.courses.forEach(function (c) {
+      if (String(c.courseId) === String(courseId)) course = c;
+    });
+    if (!course) {
+      invalidId('এই আইডির কোনো কোর্স পাওয়া যায়নি। কোর্সসমূহ পাতা থেকে একটি কোর্স বেছে নিন।');
+      return;
+    }
+
+    var name = RC_PUBLIC.courseDisplayName(course);
+    document.title = name + ' — REDUAN COMPUTER';
+
+    var thumb = course.imageUrl
+      ? '<div class="course-thumb"><img src="' + RC_API.esc(course.imageUrl) + '" alt="' + RC_API.esc(name) + '"></div>'
+      : '<div class="course-thumb" aria-hidden="true">' + RC_API.esc(name.split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w.charAt(0); }).join('').toUpperCase() || 'RC') + '</div>';
+
+    var desc = course.description
+      ? '<p>' + RC_API.esc(course.description) + '</p>'
+      : '<p class="muted">এই কোর্সের বিবরণ এখনো দেওয়া হয়নি।</p>';
+
+    detail.innerHTML =
+      '<div class="detail-head">' +
+        '<div class="detail-thumb">' + thumb + '</div>' +
+        '<div class="detail-info">' +
+          '<h1>' + RC_API.esc(name) + '</h1>' +
+          desc +
+          '<div class="course-meta">' +
+            '<span class="badge">মেয়াদ: ' + RC_API.esc(RC_API.durationText(course)) + '</span>' +
+            '<span class="badge">মোট ক্লাস: ' + RC_API.esc(RC_API.classesText(course)) + '</span>' +
+            RC_PUBLIC.admissionStatusBadge(course) +
+          '</div>' +
+          '<p class="course-fee mt-2">কোর্স ফি: ' + RC_API.esc(RC_API.feeText(course)) + '</p>' +
+          '<p class="muted small">শেখার ফলাফল: ' + (course.description ? RC_API.esc(course.description) : 'বিস্তারিত তথ্য শীঘ্রই আসছে।') + '</p>' +
+          '<p><a class="btn" href="admission.html?course=' + RC_API.esc(course.courseId) + '">এই কোর্সে ভর্তি হোন</a></p>' +
+        '</div>' +
+      '</div>';
+
+    /* Batches for this course. */
+    return RC_PUBLIC.loadBatches(course.courseId).then(function (bResult) {
+      if (bResult.notConfigured) {
+        batchNotice.innerHTML = RC_API.backendNoticeHTML();
+        batchList.innerHTML = '';
+        return;
+      }
+      if (bResult.error) {
+        batchList.innerHTML = '<div class="alert alert-error">' + RC_API.esc(bResult.error) + '</div>';
+        return;
+      }
+      if (!bResult.batches.length) {
+        batchList.innerHTML = '<p class="muted">এই কোর্সের জন্য এখন কোনো ব্যাচ খোলা নেই।</p>';
+        return;
+      }
+      batchList.innerHTML = bResult.batches.map(function (b) {
+        var seats = (b.seatsLeft === '' || b.seatsLeft === null || b.seatsLeft === undefined)
+          ? 'আসন সম্পর্কে জানতে যোগাযোগ করুন'
+          : 'খালি আসন: ' + RC_API.esc(String(b.seatsLeft));
+        return '<div class="batch-item"><div>' +
+          '<h3>' + RC_API.esc(b.batchName || '') + '</h3>' +
+          '<p>শুরুর তারিখ: ' + RC_API.esc(RC_API.fmtDate(b.startDate)) +
+          ' · ক্লাসের দিন: ' + RC_API.esc(b.classDays || '—') +
+          ' · সময়: ' + RC_API.esc(b.classSchedule || '—') +
+          ' · ' + seats + '</p></div>' +
+          '<a class="btn btn-sm" href="admission.html?course=' + RC_API.esc(course.courseId) + '&amp;batch=' + RC_API.esc(b.batchId || '') + '">এই ব্যাচে ভর্তি হোন</a>' +
+          '</div>';
+      }).join('');
+      /* Admission button in the detail header points at the first batch. */
+      var first = bResult.batches[0];
+      if (first && first.batchId) {
+        var btn = detail.querySelector('a.btn[href^="admission.html?course="]');
+        if (btn) btn.href = 'admission.html?course=' + encodeURIComponent(course.courseId) + '&batch=' + encodeURIComponent(first.batchId);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

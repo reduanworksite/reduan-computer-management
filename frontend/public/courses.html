@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>কোর্সসমূহ — REDUAN COMPUTER</title>
+<meta name="description" content="REDUAN COMPUTER-এর সব কোর্স দেখুন — মেয়াদ, মোট ক্লাস, ফি ও ভর্তির তথ্যসহ।">
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="public.css">
+</head>
+<body>
+<header id="site-header" class="site-header"></header>
+
+<main>
+  <section class="section">
+    <div class="container">
+      <h1 class="section-title">কোর্সসমূহ</h1>
+      <p class="section-sub">আমাদের সব কোর্স এক জায়গায়। কোনো কোর্সের ফি বা মেয়াদ না দেখালে বুঝবেন সেটি এখনো নির্ধারণ করা হয়নি — সে ক্ষেত্রে ফোনে যোগাযোগ করুন।</p>
+      <div id="courses-notice"></div>
+      <div id="courses-list" class="course-grid">
+        <p class="muted">কোর্সের তালিকা লোড হচ্ছে…</p>
+      </div>
+      <div id="courses-seed-note" class="mt-2"></div>
+    </div>
+  </section>
+</main>
+
+<footer id="site-footer" class="site-footer"></footer>
+
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="public.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_PUBLIC.renderHeader('courses');
+  RC_PUBLIC.renderFooter();
+
+  var list = document.getElementById('courses-list');
+  var notice = document.getElementById('courses-notice');
+  var seedNote = document.getElementById('courses-seed-note');
+
+  RC_PUBLIC.loadCourses().then(function (result) {
+    if (result.notConfigured) {
+      notice.innerHTML = RC_API.backendNoticeHTML();
+      seedNote.innerHTML = RC_PUBLIC.seedNoteHTML();
+    } else if (result.error) {
+      list.innerHTML = '<div class="alert alert-error">' + RC_API.esc(result.error) + '</div>';
+      return;
+    }
+    if (!result.courses.length) {
+      list.innerHTML = '<p class="muted">এই মুহূর্তে কোনো কোর্স পাওয়া যায়নি।</p>';
+      return;
+    }
+    list.innerHTML = result.courses.map(function (c) { return RC_PUBLIC.courseCardHTML(c); }).join('');
+  });
+})();
+</script>
+</body>
+</html>
