@@ -1,0 +1,213 @@
+/* ============================================================================
+ * REDUAN COMPUTER — shared/style.css (বেস ডিজাইন)
+ * Premium Blue & White, Hind Siliguri + Noto Sans Bengali + Inter।
+ * অতিরিক্ত gradient/animation নয় — Premium কিন্তু Simple ও Practical।
+ * ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --blue-900: #0a1f44;
+  --blue-800: #123a7a;
+  --blue-700: #1d4ed8;
+  --blue-600: #2563eb;
+  --blue-100: #dbeafe;
+  --blue-50: #eff6ff;
+  --gold: #c9a227;
+  --bg: #f4f7fc;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --success: #15803d;
+  --success-bg: #dcfce7;
+  --danger: #b91c1c;
+  --danger-bg: #fee2e2;
+  --warning: #a16207;
+  --warning-bg: #fef3c7;
+  --radius: 12px;
+  --shadow: 0 2px 10px rgba(10, 31, 68, 0.08);
+  --font-bn: 'Hind Siliguri', 'Noto Sans Bengali', 'Inter', system-ui, sans-serif;
+}
+html[data-theme="dark"] {
+  --bg: #0b1220;
+  --surface: #111c33;
+  --surface-muted: #1a2947;
+  --text: #e8eefc;
+  --text-muted: #94a3b8;
+  --border: #24365c;
+  --blue-50: #16294d;
+  --blue-100: #1e3a66;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  --success-bg: #14532d;
+  --danger-bg: #450a0a;
+  --warning-bg: #451a03;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font-bn);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  font-size: 16px;
+}
+img { max-width: 100%; }
+a { color: var(--blue-600); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, h4 { line-height: 1.35; margin: 0 0 0.5rem; color: var(--text); }
+p { margin: 0 0 0.75rem; }
+.container { width: min(1120px, 92%); margin: 0 auto; }
+.muted { color: var(--text-muted); }
+.small { font-size: 0.875rem; }
+.text-center { text-align: center; }
+.mt-1 { margin-top: 0.5rem; } .mt-2 { margin-top: 1rem; } .mt-3 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: 0.5rem; } .mb-2 { margin-bottom: 1rem; } .mb-3 { margin-bottom: 1.5rem; }
+.hidden { display: none !important; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-block;
+  padding: 0.65rem 1.4rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--blue-600);
+  color: #fff;
+  font-family: var(--font-bn);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.4;
+}
+.btn:hover { background: var(--blue-700); text-decoration: none; color: #fff; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-outline { background: transparent; border-color: var(--blue-600); color: var(--blue-600); }
+.btn-outline:hover { background: var(--blue-50); color: var(--blue-700); }
+.btn-gold { background: var(--gold); color: #1a1a1a; }
+.btn-gold:hover { background: #b8922a; color: #1a1a1a; }
+.btn-danger { background: var(--danger); }
+.btn-danger:hover { background: #991b1b; }
+.btn-sm { padding: 0.35rem 0.8rem; font-size: 0.875rem; }
+.btn-block { display: block; width: 100%; }
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+}
+.card h3 { margin-bottom: 0.25rem; }
+
+/* ---------- Forms ---------- */
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; }
+.form-group label .req { color: var(--danger); }
+input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
+input[type="date"], input[type="password"], select, textarea {
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-bn);
+  font-size: 1rem;
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--blue-600);
+  outline-offset: 1px;
+  border-color: var(--blue-600);
+}
+textarea { min-height: 96px; resize: vertical; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.field-error { color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem; }
+.form-hint { color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem; }
+
+/* ---------- Tables ---------- */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+th, td { padding: 0.7rem 0.8rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td.wrap, th.wrap { white-space: normal; }
+thead th { background: var(--surface-muted); font-weight: 700; color: var(--text); }
+tbody tr:hover { background: var(--blue-50); }
+
+/* ---------- Badges / status ---------- */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); }
+.badge-warning { background: var(--warning-bg); color: var(--warning); }
+.badge-info { background: var(--blue-100); color: var(--blue-800); }
+
+/* ---------- Alerts / notices ---------- */
+.alert { padding: 0.9rem 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border); }
+.alert-success { background: var(--success-bg); color: var(--success); border-color: transparent; }
+.alert-error { background: var(--danger-bg); color: var(--danger); border-color: transparent; }
+.alert-info { background: var(--blue-50); color: var(--blue-800); border-color: transparent; }
+.backend-notice {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+}
+html[data-theme="dark"] .backend-notice { border-color: #713f12; }
+
+/* ---------- Stat cards ---------- */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.2rem; box-shadow: var(--shadow); }
+.stat-card .label { color: var(--text-muted); font-size: 0.9rem; }
+.stat-card .value { font-size: 1.7rem; font-weight: 700; color: var(--blue-800); line-height: 1.2; }
+html[data-theme="dark"] .stat-card .value { color: #93c5fd; }
+
+/* ---------- Empty state ---------- */
+.empty-state { text-align: center; color: var(--text-muted); padding: 2rem 1rem; }
+
+/* ---------- Spinner ---------- */
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--blue-600); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: -3px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Receipt (print) ---------- */
+.receipt {
+  background: #fff;
+  color: #111;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.receipt h2, .receipt h3 { color: #0a1f44; }
+.receipt table { font-size: 1rem; }
+.receipt th, .receipt td { border-bottom: 1px solid #eee; color: #111; }
+.receipt .sign-row { display: flex; justify-content: space-between; margin-top: 2.5rem; }
+.receipt .sign-box { text-align: center; border-top: 1px solid #333; padding-top: 0.3rem; min-width: 180px; }
+
+@media print {
+  body { background: #fff; }
+  .no-print, header, nav, footer, .sidebar, .topbar { display: none !important; }
+  .receipt { border: none; box-shadow: none; max-width: 100%; }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+  .form-row { grid-template-columns: 1fr; }
+  body { font-size: 15px; }
+}
+@media (max-width: 520px) {
+  .btn { padding: 0.6rem 1rem; }
+  .stat-card .value { font-size: 1.4rem; }
+}
