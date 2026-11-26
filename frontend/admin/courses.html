@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Courses — Admin Dashboard — REDUAN COMPUTER</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+<div id="shell"></div>
+<main class="admin-content" id="page-content">
+  <div id="backend-notice"></div>
+  <div class="page-head">
+    <h2>Courses — কোর্স</h2>
+    <p>কোর্স যোগ, সম্পাদনা ও Soft Delete করুন।</p>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn btn-gold" id="btn-new">+ নতুন কোর্স</button>
+    <button class="btn btn-outline" id="btn-reload">তালিকা রিফ্রেশ</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Course ID</th><th>নাম</th><th>বাংলা নাম</th><th>মেয়াদ</th><th>মোট ক্লাস</th>
+        <th>নিয়মিত ফি</th><th>ছাড়</th><th>চূড়ান্ত ফি</th><th>ভর্তির শেষ তারিখ</th><th>অবস্থা</th><th>Action</th>
+      </tr></thead>
+      <tbody id="courses-body"><tr><td colspan="11" class="empty-state">Backend সংযুক্ত হলে কোর্সের তালিকা দেখাবে।</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="modal-backdrop hidden" id="course-modal">
+    <div class="modal">
+      <h3 id="course-modal-title">নতুন কোর্স</h3>
+      <form id="course-form">
+        <input type="hidden" id="f-courseId">
+        <div class="form-group"><label>কোর্সের নাম (English) <span class="req">*</span></label><input type="text" id="f-courseName" required></div>
+        <div class="form-group"><label>কোর্সের নাম (বাংলা)</label><input type="text" id="f-courseNameBn"></div>
+        <div class="form-group"><label>বিবরণ <span class="req">*</span></label><textarea id="f-description" required></textarea></div>
+        <div class="form-group"><label>ছবির লিংক (ঐচ্ছিক)</label><input type="text" id="f-imageUrl" placeholder="Google Drive লিংক"></div>
+        <div class="form-row">
+          <div class="form-group"><label>মেয়াদ</label><input type="text" id="f-duration" placeholder="যেমন: ৩ মাস"></div>
+          <div class="form-group"><label>মোট ক্লাস</label><input type="number" id="f-totalClasses" min="0" step="1"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>নিয়মিত ফি (খালি রাখা যাবে)</label><input type="number" id="f-regularFee" min="0" step="1"></div>
+          <div class="form-group"><label>ছাড় (খালি রাখা যাবে)</label><input type="number" id="f-discount" min="0" step="1"></div>
+        </div>
+        <p class="small muted">চূড়ান্ত ফি (Final Fee) backend নিজে হিসাব করে (নিয়মিত ফি − ছাড়) — এখানে বসাতে হয় না।</p>
+        <div class="form-row">
+          <div class="form-group"><label>অবস্থা</label>
+            <select id="f-status">
+              <option value="Published">Published</option>
+              <option value="Draft">Draft</option>
+              <option value="Closed">Closed</option>
+            </select>
+          </div>
+          <div class="form-group"><label>ভর্তির শেষ তারিখ</label><input type="date" id="f-admissionDeadline"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="course-modal-close">বাতিল</button>
+          <button type="submit" class="btn">সংরক্ষণ করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script src="admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  RC_ADMIN.renderShell('courses', 'Courses');
+  var tbody = document.getElementById('courses-body');
+  var cache = [];
+
+  function renderRows(list) {
+    cache = list || [];
+    if (!cache.length) { RC_ADMIN.emptyRow(tbody, 11, 'কোনো কোর্স পাওয়া যায়নি।'); return; }
+    tbody.innerHTML = cache.map(function (c) {
+      var statusClass = c.status === 'Published' ? 'badge-success' : (c.status === 'Draft' ? 'badge-warning' : '');
+      var statusHtml = '<span class="badge ' + statusClass + '">' + RC_API.esc(c.status || '—') + '</span>' +
+        (c.isArchived ? ' <span class="badge badge-danger">Archived</span>' : '');
+      return '<tr>' +
+        '<td>' + RC_API.esc(c.courseId) + '</td>' +
+        '<td class="wrap">' + RC_API.esc(c.name) + '</td>' +
+        '<td>' + RC_API.esc(c.nameBn || '—') + '</td>' +
+        '<td>' + RC_API.esc(RC_API.durationText(c)) + '</td>' +
+        '<td>' + RC_API.esc(RC_API.classesText(c)) + '</td>' +
+        '<td>' + (c.regularFee ? RC_API.fmtMoney(c.regularFee) : '—') + '</td>' +
+        '<td>' + (c.discount ? RC_API.fmtMoney(c.discount) : '—') + '</td>' +
+        '<td>' + RC_API.feeText(c) + '</td>' +
+        '<td>' + RC_API.esc(RC_API.fmtDate(c.admissionDeadline)) + '</td>' +
+        '<td>' + statusHtml + '</td>' +
+        '<td><button class="btn btn-sm btn-outline" data-edit="' + RC_API.esc(c.courseId) + '">Edit</button> ' +
+        '<button class="btn btn-sm btn-danger" data-del="' + RC_API.esc(c.courseId) + '">Delete</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function loadCourses() {
+    RC_ADMIN.setLoading(tbody, true);
+    /* Admin action getCourses — সব কোর্স (Published / Draft / Closed /
+     * Archived-সহ) আসে; includeArchived: true যাতে Archive করা কোর্সও
+     * তালিকায় দেখা যায়। */
+    RC_API.call('getCourses', { includeArchived: true }).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'কোর্সের তালিকা আনা যায়নি।', 'error'); RC_ADMIN.emptyRow(tbody, 11); return; }
+      renderRows(res.data || []);
+    });
+  }
+
+  tbody.addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    var id = btn.getAttribute('data-edit') || btn.getAttribute('data-del');
+    var c = cache.find(function (x) { return x.courseId === id; });
+    if (!c) return;
+    if (btn.hasAttribute('data-edit')) openForm(c);
+    if (btn.hasAttribute('data-del')) {
+      if (!RC_ADMIN.confirmDialog('কোর্স "' + c.name + '" Delete (Archive) করতে চান? ভর্তি থাকা শিক্ষার্থী থাকলে backend বাধা দেবে।')) return;
+      RC_API.call('deleteCourse', { courseId: c.courseId }).then(function (res) {
+        if (!res.ok) { RC_ADMIN.toast(res.error || 'কোর্স Delete করা যায়নি।', 'error'); return; }
+        RC_ADMIN.toast('কোর্সটি Archive করা হয়েছে।', 'success');
+        loadCourses();
+      });
+    }
+  });
+
+  var modal = document.getElementById('course-modal');
+  var form = document.getElementById('course-form');
+  function openForm(c) {
+    form.reset();
+    document.getElementById('f-courseId').value = c ? c.courseId : '';
+    document.getElementById('course-modal-title').textContent = c ? 'কোর্স সম্পাদনা — ' + c.courseId : 'নতুন কোর্স';
+    if (c) {
+      document.getElementById('f-courseName').value = c.name || '';
+      document.getElementById('f-courseNameBn').value = c.nameBn || '';
+      document.getElementById('f-description').value = c.description || '';
+      document.getElementById('f-imageUrl').value = c.imageUrl || '';
+      document.getElementById('f-duration').value = c.duration || '';
+      document.getElementById('f-totalClasses').value = (c.totalClasses !== undefined && c.totalClasses !== null) ? c.totalClasses : '';
+      document.getElementById('f-regularFee').value = (c.regularFee !== undefined && c.regularFee !== null) ? c.regularFee : '';
+      document.getElementById('f-discount').value = (c.discount !== undefined && c.discount !== null) ? c.discount : '';
+      document.getElementById('f-status').value = c.status || 'Published';
+      document.getElementById('f-admissionDeadline').value = c.admissionDeadline ? RC_API.fmtDate(c.admissionDeadline) : '';
+    }
+    modal.classList.remove('hidden');
+  }
+  document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+  document.getElementById('btn-reload').addEventListener('click', loadCourses);
+  document.getElementById('course-modal-close').addEventListener('click', function () { modal.classList.add('hidden'); });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var id = document.getElementById('f-courseId').value;
+    var payload = {
+      courseName: document.getElementById('f-courseName').value.trim(),
+      description: document.getElementById('f-description').value.trim(),
+      courseNameBn: document.getElementById('f-courseNameBn').value.trim(),
+      imageUrl: document.getElementById('f-imageUrl').value.trim(),
+      duration: document.getElementById('f-duration').value.trim(),
+      status: document.getElementById('f-status').value,
+      admissionDeadline: document.getElementById('f-admissionDeadline').value || undefined
+    };
+    var tc = document.getElementById('f-totalClasses').value;
+    var rf = document.getElementById('f-regularFee').value;
+    var dc = document.getElementById('f-discount').value;
+    if (tc !== '') payload.totalClasses = Number(tc);
+    if (rf !== '') payload.regularFee = Number(rf);
+    if (dc !== '') payload.discount = Number(dc);
+    var action = id ? 'updateCourse' : 'createCourse';
+    if (id) payload.courseId = id;
+    RC_API.call(action, payload).then(function (res) {
+      if (!res.ok) { RC_ADMIN.toast(res.error || 'কোর্স সংরক্ষণ করা যায়নি।', 'error'); return; }
+      RC_ADMIN.toast(id ? 'কোর্স আপডেট হয়েছে।' : 'নতুন কোর্স তৈরি হয়েছে — Course ID: ' + (res.data && res.data.courseId ? res.data.courseId : ''), 'success');
+      modal.classList.add('hidden');
+      loadCourses();
+    });
+  });
+
+  RC_ADMIN.guardPage().then(function (ok) { if (ok) loadCourses(); });
+})();
+</script>
+</body>
+</html>
